@@ -1,0 +1,50 @@
+{
+  "name": "nihil-nest-template",
+  "version": "1.0.0",
+  "description": "Nest 편하게 하려고 만든 템플릿.",
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nihil-template/nihil-nest-template.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nihil-template/nihil-nest-template/issues"
+  },
+  "homepage": "https://github.com/nihil-template/nihil-nest-template#readme",
+  "scripts": {
+    "build": "nest build",
+    "start:dev": "nest start --watch",
+    "start": "nest start"
+  },
+  "keywords": [],
+  "author": "NIHILncunia",
+  "license": "MIT",
+  "dependencies": {
+    "@nestjs/common": "^8.2.6",
+    "@nestjs/config": "^1.1.6",
+    "@nestjs/core": "^8.2.6",
+    "@nestjs/platform-express": "^8.2.6",
+    "@nestjs/typeorm": "^8.0.3",
+    "pg": "^8.7.3",
+    "reflect-metadata": "^0.1.13",
+    "rimraf": "^3.0.2",
+    "rxjs": "^7.5.3",
+    "typeorm": "^0.2.41",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^8.2.0",
+    "@nestjs/schematics": "^8.0.6",
+    "@types/express": "^4.17.13",
+    "@types/node": "^17.0.16",
+    "@types/uuid": "^8.3.4",
+    "@typescript-eslint/eslint-plugin": "^5.11.0",
+    "@typescript-eslint/parser": "^5.11.0",
+    "eslint": "^8.8.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-plugin-html": "^6.2.0",
+    "eslint-plugin-import": "^2.25.4",
+    "tsconfig-paths": "^3.12.0",
+    "typescript": "^4.5.5"
+  }
+}
