@@ -15,6 +15,8 @@ DB_PORT=
 DB_USER=
 DB_PASSWORD=
 DB_NAME=
+JWT_SECRET=
+JWT_EXPIRY=
 ```
 
 각 항목을 데이터베이스에 따라 맞게 입력한다. DB_NAME은 데이터베이스의 이름을 입력한다.
