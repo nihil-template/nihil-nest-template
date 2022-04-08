@@ -6,6 +6,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
   app.use(helmet());
-  await app.listen(3000);
+  await app.listen(4000);
+  console.log('서버가 4000포트에서 실행되고 있습니다.');
 }
 bootstrap();
