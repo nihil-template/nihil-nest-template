@@ -33,4 +33,8 @@ export class AuthController {
   async signOut(@Res() res: Response) {
     return this.authService.signOut(res);
   }
+
+  async refresh() {
+    return '';
+  }
 }
