@@ -64,14 +64,16 @@ export class UsersService {
   }
 
   async deleteUser(id: number): Promise<UserEntity> {
-    return this.prisma.user.delete({
+    return this.prisma.user.update({
       where: { id: Number(id), },
+      data: { status: 'WITHDRAW', },
       select: {
         id: true,
         email: true,
         userName: true,
         createdAt: true,
         updatedAt: true,
+        status: true,
       },
     });
   }

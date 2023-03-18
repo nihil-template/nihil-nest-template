@@ -23,15 +23,6 @@ async function bootstrap() {
     .setTitle('API문서명')
     .setDescription('API문서 설명')
     .setVersion('1.0') // API 버전
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        name: 'JWT',
-        in: 'header',
-      },
-      'access-token'
-    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);

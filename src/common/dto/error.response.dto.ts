@@ -1,13 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ResponseDTO } from './response.dto';
 
-export class ErrorResponseDTO extends ResponseDTO {
+export class ErrorResponseDTO {
   @ApiProperty({
     description: '에러 메시지',
-    oneOf: [
-      { type: 'string', },
-      { type: 'string[]', },
-    ],
+    type: 'string',
+    isArray: true,
   })
-  message: string | string[];
+  message: string[];
 }
