@@ -3,10 +3,12 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const port = 4000;
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     transform: true,
@@ -15,23 +17,28 @@ async function bootstrap() {
   app.enableCors();
   app.use(helmet());
   app.use(cookieParser());
-
-  await app.listen(4000);
-
-  const logger = new Logger('NestApplication');
+  app.set('etag', false);
 
   const config = new DocumentBuilder()
     .setTitle('API문서명')
     .setDescription('API문서 설명')
     .setVersion('1.0') // API 버전
     .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'Token', },
+      {
+        type: 'http',
+        scheme: 'bearer',
+        name: 'JWT',
+        in: 'header',
+      },
       'access-token'
     )
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('docs', app, document);
 
-  logger.log('서버가 4000포트에서 실행되고 있습니다.');
+  const logger = new Logger('NestApplication', { timestamp: true, });
+
+  await app.listen(port);
+  logger.log(`서버가 ${port} 포트에서 실행됩니다.`);
 }
 bootstrap();

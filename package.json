@@ -13,10 +13,12 @@
   "homepage": "https://github.com/nihil-template/nihil-nest-template#readme",
   "scripts": {
     "build": "nest build",
-    "start:dev": "nest start --watch",
-    "start": "nest start",
-    "p:init": "npx prisma init",
-    "p:migrate": "npx prisma migrate dev --name save"
+    "n:dev": "nest start --watch",
+    "n:start": "nest start",
+    "p:init": "yarn prisma init",
+    "p:migrate": "yarn prisma migrate dev --create-only",
+    "p:push": "yarn prisma db push",
+    "p:studio": "yarn prisma studio"
   },
   "keywords": [],
   "author": "NIHILncunia",
@@ -38,6 +40,8 @@
     "cookie": "^0.5.0",
     "cookie-parser": "^1.4.6",
     "helmet": "^6.0.1",
+    "moment": "^2.29.4",
+    "moment-timezone": "^0.5.41",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
