@@ -2,18 +2,20 @@ import {
   Body, Controller, Get, Post, Res, UseGuards
 } from '@nestjs/common';
 import { Response } from 'express';
-import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBody, ApiOperation, ApiResponse, ApiTags
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { CreateUserDTO } from '@/users/dto';
 import { GetUser } from './get.user.decorator';
-import { UserEntity } from '@/common/entity';
 import { JwtAuthGuard, JwtRefreshAuthGuard, LocalAuthGuard } from './guards';
 import { Public } from './public.decorator';
-import { UserResDTO } from './dto';
-import { ErrorResponseDTO } from '@/common/dto/error.response.dto';
-import { HttpErrorDTO } from '@/common/dto';
+import { SignInDTO, UserResDTO } from './dto';
+import { ErrorResponseDTO, HttpErrorDTO } from '@/common/dto';
+import { CreateUserDTO } from '@/users/dto/create.user.dto';
+import { UserEntity } from '@/users/entity/user.entity';
 
 @Controller('auth')
+@ApiTags('Auth')
 export class AuthController {
   // eslint-disable-next-line no-unused-vars
   constructor(private readonly authService: AuthService) { }
@@ -33,11 +35,16 @@ export class AuthController {
     description: '에러',
     type: ErrorResponseDTO,
   })
+  @ApiBody({
+    type: () => CreateUserDTO,
+    description: '회원가입 정보를 전달합니다.',
+  })
   async signUp(@Body() createUserDTO: CreateUserDTO) {
     return this.authService.signUp(createUserDTO);
   }
 
   @Post('signin')
+  @UseGuards(LocalAuthGuard)
   @ApiOperation({
     summary: '로그인',
     description: '로그인에 성공하면 토큰이 발급됩니다.',
@@ -58,14 +65,9 @@ export class AuthController {
     type: HttpErrorDTO,
   })
   @ApiBody({
-    schema: {
-      properties: {
-        email: { type: 'string', example: 'nihil_ncunia@naver.com', },
-        password: { type: 'string', example: '1234567', },
-      },
-    },
+    type: SignInDTO,
+    description: '로그인 정보를 전달합니다.',
   })
-  @UseGuards(LocalAuthGuard)
   async signIn(
     @GetUser() user: UserEntity,
     @Res({ passthrough: true, }) res: Response
@@ -78,8 +80,6 @@ export class AuthController {
     res.cookie('Authentication', AccessToken, ATOption);
     res.cookie('Refresh', RefreshToken, RTOption);
 
-    delete user.hashedRefreshToken;
-
     return {
       message: '로그인 성공',
       user,
@@ -88,6 +88,7 @@ export class AuthController {
 
   @Public()
   @Get('signout')
+  @UseGuards(JwtRefreshAuthGuard)
   @ApiOperation({
     summary: '로그아웃',
     description: '로그아웃을 하고 토큰 정보를 지웁니다.',
@@ -106,12 +107,11 @@ export class AuthController {
     description: '인증 실패',
     type: HttpErrorDTO,
   })
-  @UseGuards(JwtRefreshAuthGuard)
   async signOut(
     @GetUser() user: UserEntity,
     @Res({ passthrough: true, }) res: Response
   ) {
-    const { accessOption, refreshOption, } = await this.authService.signOutWithTokenClear();
+    const { accessOption, refreshOption, } = this.authService.signOutWithTokenClear();
 
     await this.authService.deleteRefreshToken(user.id);
 
@@ -130,7 +130,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: '성공',
-    type: UserEntity,
+    type: () => UserEntity,
   })
   @ApiResponse({
     status: 401,
@@ -143,6 +143,8 @@ export class AuthController {
     return user;
   }
 
+  @Get('refresh')
+  @UseGuards(JwtRefreshAuthGuard)
   @ApiOperation({
     summary: '토큰 갱신',
     description: '토큰이 만료되었을 경우 토큰을 재발급',
@@ -150,7 +152,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: '성공',
-    type: UserEntity,
+    type: () => UserEntity,
   })
   @ApiResponse({
     status: 401,
@@ -158,8 +160,6 @@ export class AuthController {
     type: HttpErrorDTO,
   })
   @Public()
-  @Get('refresh')
-  @UseGuards(JwtRefreshAuthGuard)
   async refresh(
     @GetUser() user: UserEntity,
     @Res({ passthrough: true, }) res: Response

@@ -1,15 +1,16 @@
 import {
   Body,
-  Controller, Get, Logger, Param, Patch, Put, UseGuards
+  Controller, Get, Logger, Param, Patch, UseGuards
 } from '@nestjs/common';
 import {
-  ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse
+  ApiBody,
+  ApiOkResponse, ApiOperation, ApiParam, ApiTags, ApiUnauthorizedResponse
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '@/auth/guards';
-import { UpdateUserDTO } from './dto';
-import { UserEntity } from '@/common/entity';
+import { UpdateUserDTO } from './dto/update.user.dto';
 import { HttpErrorDTO } from '@/common/dto';
+import { UserEntity } from '@/users/entity/user.entity';
 
 @Controller('users')
 @ApiTags('Users')
@@ -19,47 +20,49 @@ export class UsersController {
   // eslint-disable-next-line no-unused-vars
   constructor(private readonly usersService: UsersService) { }
 
-  @ApiOkResponse({ description: '성공', type: UserEntity, isArray: true, })
+  @Get()
+  @ApiOkResponse({ description: '성공', type: () => UserEntity, isArray: true, })
   @ApiOperation({
     summary: '모든 유저 조회',
     description: '모든 유저를 조회합니다.',
   })
-  @Get()
   async getUsers() {
     return this.usersService.getUsers();
   }
 
-  @ApiOkResponse({ description: '성공', type: UserEntity, })
+  @Get(':id')
+  @ApiOkResponse({ description: '성공', type: () => UserEntity, })
   @ApiOperation({
     summary: '개별 유저 조회',
     description: '개별 유저 정보를 조회합니다.',
   })
-  @Get(':id')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'id를 입력합니다.',
+  })
   async getUser(@Param('id') id: number) {
     return this.usersService.getUser(id);
   }
 
-  @ApiOkResponse({ description: '성공', type: UserEntity, })
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({ description: '성공', type: () => UserEntity, })
   @ApiUnauthorizedResponse({ description: '인증 실패', type: HttpErrorDTO, })
   @ApiOperation({
     summary: '개별 유저 수정',
     description: '개별 유저 정보를 수정합니다.',
   })
-  @UseGuards(JwtAuthGuard)
-  @Put(':id')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'id를 입력합니다.',
+  })
+  @ApiBody({
+    type: UpdateUserDTO,
+    description: '수정된 유저 데이터를 전달합니다.',
+  })
   async updateUser(@Param('id') id: number, @Body() updateUserDTO: UpdateUserDTO) {
     return this.usersService.updateUser(id, updateUserDTO);
-  }
-
-  @ApiOkResponse({ description: '성공', type: UserEntity, })
-  @ApiUnauthorizedResponse({ description: '인증 실패', type: HttpErrorDTO, })
-  @ApiOperation({
-    summary: '개별 유저 탈퇴처리',
-    description: '유저를 탈퇴처리 합니다. (상태변경).',
-  })
-  @UseGuards(JwtAuthGuard)
-  @Patch(':id')
-  async deleteUser(@Param('id') id: number) {
-    return this.usersService.deleteUser(id);
   }
 }

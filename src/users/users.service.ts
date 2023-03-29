@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { UserEntity } from '@/common/entity';
-import { CreateUserDTO, UpdateUserDTO } from './dto';
+import { CreateUserDTO } from './dto/create.user.dto';
+import { UpdateUserDTO } from './dto/update.user.dto';
+import { UserEntity } from '@/users/entity/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -11,24 +12,15 @@ export class UsersService {
   async createUser(createUserDTO: CreateUserDTO): Promise<UserEntity> {
     return this.prisma.user.create({
       data: createUserDTO,
-      select: {
-        id: true,
-        email: true,
-        userName: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
   }
 
   async getUsers(): Promise<UserEntity[]> {
     return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        userName: true,
-        createdAt: true,
-        updatedAt: true,
+      where: {
+        NOT: {
+          status: 'WITHDRAW',
+        },
       },
     });
   }
@@ -36,13 +28,6 @@ export class UsersService {
   async getUser(id: number): Promise<UserEntity> {
     return this.prisma.user.findUnique({
       where: { id: Number(id), },
-      select: {
-        id: true,
-        email: true,
-        userName: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
   }
 
@@ -53,28 +38,6 @@ export class UsersService {
     return this.prisma.user.update({
       where: { id, },
       data: updateUserDTO,
-      select: {
-        id: true,
-        email: true,
-        userName: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-  }
-
-  async deleteUser(id: number): Promise<UserEntity> {
-    return this.prisma.user.update({
-      where: { id: Number(id), },
-      data: { status: 'WITHDRAW', },
-      select: {
-        id: true,
-        email: true,
-        userName: true,
-        createdAt: true,
-        updatedAt: true,
-        status: true,
-      },
     });
   }
 }

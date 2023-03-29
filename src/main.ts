@@ -25,7 +25,9 @@ async function bootstrap() {
     .setVersion('1.0') // API 버전
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: { defaultModelsExpandDepth: 0, },
+  });
 
   const logger = new Logger('NestApplication', { timestamp: true, });
 

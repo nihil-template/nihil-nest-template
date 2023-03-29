@@ -5,13 +5,16 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UsersService } from '@/users/users.service';
 import { UserResDTO } from './dto';
-import { CreateUserDTO } from '@/users/dto';
-import { UserEntity } from '@/common/entity';
+import { CreateUserDTO } from '@/users/dto/create.user.dto';
+import { UserEntity } from '@/users/entity/user.entity';
+import { IAccessTokenInfo, IRefreshToken } from './types/token-info.types';
+import { ITokenOptions } from './types/tokens-info.types';
 
 export interface TokenPayload {
   id: number;
   email: string;
   userName: string;
+  role: string;
 }
 
 @Injectable()
@@ -75,14 +78,20 @@ export class AuthService {
       data: {
         email,
         userName,
-        password: hashedPassword,
       },
-      select: {
-        id: true,
-        email: true,
-        userName: true,
-        createdAt: true,
-        updatedAt: true,
+    });
+
+    await this.prisma.userAuth.create({
+      data: {
+        userId: user.id,
+        hashedPassword,
+      },
+    });
+
+    await this.prisma.userToken.create({
+      data: {
+        userId: user.id,
+        hashedRefreshToken: null,
       },
     });
 
@@ -93,10 +102,14 @@ export class AuthService {
   }
 
   //액세스 토큰 생성
-  async createAccessToken(user: UserEntity) {
-    const { id, email, userName, } = user;
+  async createAccessToken(user: UserEntity): Promise<IAccessTokenInfo> {
+    const {
+      id, email, userName, role,
+    } = user;
     const AccessToken = await this.jwtService.signAsync(
-      { id, email, userName, },
+      {
+        id, email, userName, role,
+      },
       {
         algorithm: 'HS256',
         expiresIn: Number(this.configService.get('JWT_EXP')),
@@ -114,10 +127,14 @@ export class AuthService {
   }
 
   //액세스 토큰 생성
-  async createRefreshToken(user: UserEntity) {
-    const { id, email, userName, } = user;
+  async createRefreshToken(user: UserEntity): Promise<IRefreshToken> {
+    const {
+      id, email, userName, role,
+    } = user;
     const RefreshToken = await this.jwtService.signAsync(
-      { id, email, userName, },
+      {
+        id, email, userName, role,
+      },
       {
         algorithm: 'HS256',
         expiresIn: Number(this.configService.get('JWT_REFRESH_EXP')),
@@ -135,7 +152,7 @@ export class AuthService {
   }
 
   // 토큰 정보 제거
-  async signOutWithTokenClear() {
+  signOutWithTokenClear(): ITokenOptions {
     return {
       accessOption: {
         domain: 'localhost',
@@ -169,7 +186,11 @@ export class AuthService {
       );
     }
 
-    const isMatch = await this.compareData(password, user.password);
+    const userAuth = await this.prisma.userAuth.findUnique({
+      where: { userId: user.id, },
+    });
+
+    const isMatch = await this.compareData(password, userAuth.hashedPassword);
 
     if (!isMatch) {
       throw new HttpException(
@@ -180,58 +201,53 @@ export class AuthService {
       );
     }
 
-    delete user.password;
     delete user.status;
 
     return user;
   }
 
   // 데이터 암호화
-  async hashData(data: string) {
+  async hashData(data: string): Promise<string> {
     const hashedData = await bcrypt.hash(data, 10);
 
     return hashedData;
   }
 
   // 암호화 데이터 검증
-  async compareData(rawData: string, data: string) {
+  async compareData(rawData: string, data: string): Promise<boolean> {
     const res = await bcrypt.compare(rawData, data);
 
     return res;
   }
 
   // 리프레시 토큰 검증
-  async refreshTokenMatches(id: number, refreshToken: string) {
+  async refreshTokenMatches(id: number, refreshToken: string): Promise<UserEntity> {
     const user = await this.prisma.user.findUnique({
       where: { id, },
-      select: {
-        id: true,
-        userName: true,
-        email: true,
-        createdAt: true,
-        updatedAt: true,
-        hashedRefreshToken: true,
-      },
+    });
+
+    const userToken = await this.prisma.userToken.findUnique({
+      where: { userId: id, },
     });
 
     const isRefreshTokenMatching = await this.compareData(
       refreshToken,
-      user.hashedRefreshToken
+      userToken.hashedRefreshToken
     );
 
     if (isRefreshTokenMatching) {
-      delete user.hashedRefreshToken;
+      delete userToken.hashedRefreshToken;
 
       return user;
     }
   }
 
   // 리프레시 토큰 업데이트
-  async updateRefreshToken(id: number, refreshToken: string) {
+  async updateRefreshToken(id: number, refreshToken: string): Promise<void> {
     const hashedRefreshToken = await this.hashData(refreshToken);
 
-    await this.prisma.user.update({
-      where: { id, },
+    await this.prisma.userToken.update({
+      where: { userId: id, },
       data: {
         hashedRefreshToken,
       },
@@ -239,9 +255,9 @@ export class AuthService {
   }
 
   // 리프레시 토큰 제거
-  async deleteRefreshToken(id: number) {
-    await this.prisma.user.update({
-      where: { id, },
+  async deleteRefreshToken(id: number): Promise<void> {
+    await this.prisma.userToken.update({
+      where: { userId: id, },
       data: {
         hashedRefreshToken: null,
       },
