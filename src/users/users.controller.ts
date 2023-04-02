@@ -1,16 +1,17 @@
 import {
   Body,
-  Controller, Get, Logger, Param, Patch, UseGuards
+  Controller, Get, Logger, Param, Patch
 } from '@nestjs/common';
 import {
   ApiBody,
   ApiOkResponse, ApiOperation, ApiParam, ApiTags, ApiUnauthorizedResponse
 } from '@nestjs/swagger';
+import { UserRole } from '@prisma/client';
 import { UsersService } from './users.service';
-import { JwtAuthGuard } from '@/auth/guards';
 import { UpdateUserDTO } from './dto/update-user.dto';
 import { HttpErrorDTO } from '@/common/dto';
 import { UserEntity } from '@/users/entity/user.entity';
+import { Auth } from '@/auth/decorator/auth.decorator';
 
 @Controller('users')
 @ApiTags('Users')
@@ -46,7 +47,7 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @Auth([ UserRole.ADMIN, UserRole.USER, ])
   @ApiOkResponse({ description: '성공', type: () => UserEntity, })
   @ApiUnauthorizedResponse({ description: '인증 실패', type: HttpErrorDTO, })
   @ApiOperation({

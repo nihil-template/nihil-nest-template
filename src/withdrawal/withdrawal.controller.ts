@@ -1,14 +1,15 @@
 import {
   Body,
-  Controller, Get, Post, Res, UseGuards
+  Controller, Get, Post, Res
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
+import { UserRole } from '@prisma/client';
 import { WithdrawalService } from './withdrawal.service';
 import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
-import { JwtAdminAuthGuard, JwtAuthGuard } from '@/auth/guards';
 import { HttpErrorDTO } from '@/common/dto';
 import { WithdrawalEntity } from './entity/withdrawal.entity';
+import { Auth } from '@/auth/decorator/auth.decorator';
 
 @Controller('withdrawal')
 @ApiTags('Withdrawal')
@@ -19,7 +20,7 @@ export class WithdrawalController {
   ) { }
 
   @Get()
-  @UseGuards(JwtAdminAuthGuard)
+  @Auth([ UserRole.ADMIN, ])
   @ApiOperation({
     summary: '탈퇴 로그 조회',
     description: '모든 탈퇴 로그를 조회합니다.',
@@ -40,7 +41,7 @@ export class WithdrawalController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @Auth([ UserRole.USER, ])
   @ApiOperation({
     summary: '회원탈퇴',
     description: '회원탈퇴 처리를 하고 토큰을 없앱니다.',

@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { WithdrawalModule } from './withdrawal/withdrawal.module';
+import { FileModule } from './file/file.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { WithdrawalModule } from './withdrawal/withdrawal.module';
     PrismaModule,
     UsersModule,
     WithdrawalModule,
+    FileModule,
   ],
 })
 export class AppModule implements NestModule {

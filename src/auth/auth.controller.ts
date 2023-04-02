@@ -5,14 +5,16 @@ import { Response } from 'express';
 import {
   ApiBody, ApiOperation, ApiResponse, ApiTags
 } from '@nestjs/swagger';
+import { UserRole } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { GetUser } from './get.user.decorator';
-import { JwtAuthGuard, JwtRefreshAuthGuard, LocalAuthGuard } from './guards';
+import { JwtRefreshAuthGuard, LocalAuthGuard } from './guards';
 import { Public } from './public.decorator';
 import { SignInDTO, UserResDTO } from './dto';
 import { ErrorResponseDTO, HttpErrorDTO } from '@/common/dto';
 import { CreateUserDTO } from '@/users/dto/create-user.dto';
 import { UserEntity } from '@/users/entity/user.entity';
+import { Auth } from './decorator/auth.decorator';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -91,7 +93,7 @@ export class AuthController {
 
   @Public()
   @Post('signout')
-  @UseGuards(JwtRefreshAuthGuard)
+  @Auth([ UserRole.ADMIN, UserRole.USER, ])
   @ApiOperation({
     summary: '로그아웃',
     description: '로그아웃을 하고 토큰 정보를 지웁니다.',
@@ -126,6 +128,8 @@ export class AuthController {
     };
   }
 
+  @Get('me')
+  @Auth([ UserRole.ADMIN, UserRole.USER, ])
   @ApiOperation({
     summary: '사용자 정보 조회',
     description: '로그인한 유저의 정보를 조회합니다.',
@@ -140,12 +144,11 @@ export class AuthController {
     description: '인증 실패',
     type: HttpErrorDTO,
   })
-  @Get('me')
-  @UseGuards(JwtAuthGuard)
   async getMe(@GetUser() user: UserEntity) {
     return user;
   }
 
+  @Public()
   @Get('refresh')
   @UseGuards(JwtRefreshAuthGuard)
   @ApiOperation({
@@ -162,7 +165,6 @@ export class AuthController {
     description: '인증 실패',
     type: HttpErrorDTO,
   })
-  @Public()
   async refresh(
     @GetUser() user: UserEntity,
     @Res({ passthrough: true, }) res: Response
