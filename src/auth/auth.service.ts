@@ -5,17 +5,11 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UsersService } from '@/users/users.service';
 import { UserResDTO } from './dto';
-import { CreateUserDTO } from '@/users/dto/create.user.dto';
+import { CreateUserDTO } from '@/users/dto/create-user.dto';
 import { UserEntity } from '@/users/entity/user.entity';
 import { IAccessTokenInfo, IRefreshToken } from './types/token-info.types';
 import { ITokenOptions } from './types/tokens-info.types';
-
-export interface TokenPayload {
-  id: number;
-  email: string;
-  userName: string;
-  role: string;
-}
+import { TokenPayload } from './types/token-payload.types';
 
 @Injectable()
 export class AuthService {
@@ -262,5 +256,14 @@ export class AuthService {
         hashedRefreshToken: null,
       },
     });
+  }
+
+  // 토큰 분해
+  async verifyToken(token: string): Promise<TokenPayload> {
+    const verifiedToken = await this.jwtService.verifyAsync(token, {
+      secret: this.configService.get('JWT_SECRET'),
+    });
+
+    return verifiedToken;
   }
 }

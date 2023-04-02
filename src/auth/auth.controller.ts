@@ -11,7 +11,7 @@ import { JwtAuthGuard, JwtRefreshAuthGuard, LocalAuthGuard } from './guards';
 import { Public } from './public.decorator';
 import { SignInDTO, UserResDTO } from './dto';
 import { ErrorResponseDTO, HttpErrorDTO } from '@/common/dto';
-import { CreateUserDTO } from '@/users/dto/create.user.dto';
+import { CreateUserDTO } from '@/users/dto/create-user.dto';
 import { UserEntity } from '@/users/entity/user.entity';
 
 @Controller('auth')
@@ -80,14 +80,17 @@ export class AuthController {
     res.cookie('Authentication', AccessToken, ATOption);
     res.cookie('Refresh', RefreshToken, RTOption);
 
+    const tokenExp = await this.authService.verifyToken(AccessToken);
+
     return {
       message: '로그인 성공',
       user,
+      tokenExp: tokenExp.exp,
     };
   }
 
   @Public()
-  @Get('signout')
+  @Post('signout')
   @UseGuards(JwtRefreshAuthGuard)
   @ApiOperation({
     summary: '로그아웃',
@@ -167,6 +170,13 @@ export class AuthController {
     const { AccessToken, ...option } = await this.authService.createAccessToken(user);
 
     res.cookie('Authentication', AccessToken, option);
-    return user;
+
+    const tokenExp = await this.authService.verifyToken(AccessToken);
+
+    return {
+      message: '액세스 토큰 갱신 완료',
+      user,
+      tokenExp: tokenExp.exp,
+    };
   }
 }

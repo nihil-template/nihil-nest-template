@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { AuthService } from '../auth.service';
+import { TokenPayload } from '../types/token-payload.types';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
@@ -24,7 +25,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     });
   }
 
-  async validate(req: Request, payload: any) {
+  async validate(req: Request, payload: TokenPayload) {
     const refreshToken = req.cookies?.Refresh;
     return this.authService.refreshTokenMatches(
       payload.id,
