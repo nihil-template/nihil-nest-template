@@ -11,8 +11,8 @@ import { GetUser, Public, Auth } from './decorator';
 import { JwtRefreshAuthGuard, LocalAuthGuard } from './guards';
 import { SignInDTO, UserResDTO } from './dto';
 import { ErrorResponseDTO, HttpErrorDTO } from '@/common/dto';
-import { CreateUserDTO } from '@/users/dto/create-user.dto';
-import { UserEntity } from '@/users/entity/user.entity';
+import { CreateUserDTO } from '@/user/dto/create-user.dto';
+import { UserEntity } from '@/user/entity/user.entity';
 
 @Controller('auth')
 @ApiTags('Auth')

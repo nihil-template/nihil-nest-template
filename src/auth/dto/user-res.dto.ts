@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional } from 'class-validator';
-import { UserEntity } from '@/users/entity/user.entity';
+import { UserEntity } from '@/user/entity/user.entity';
 
 export class UserResDTO {
   @IsNotEmpty()

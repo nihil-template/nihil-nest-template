@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
-import { UserEntity } from '@/users/entity/user.entity';
+import { UserEntity } from '@/user/entity/user.entity';
 
 @Injectable()
-export class UsersService {
+export class UserService {
   // eslint-disable-next-line no-unused-vars
   constructor(private readonly prisma: PrismaService) { }
 

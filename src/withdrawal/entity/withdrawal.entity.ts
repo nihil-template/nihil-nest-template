@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserEntity } from '@/users/entity/user.entity';
+import { UserEntity } from '@/user/entity/user.entity';
 
 export class WithdrawalEntity {
   @ApiProperty({ type: Number, description: '식별자', })

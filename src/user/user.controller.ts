@@ -7,19 +7,19 @@ import {
   ApiOkResponse, ApiOperation, ApiParam, ApiTags, ApiUnauthorizedResponse
 } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
-import { UsersService } from './users.service';
+import { UserService } from './user.service';
 import { UpdateUserDTO } from './dto/update-user.dto';
 import { HttpErrorDTO } from '@/common/dto';
-import { UserEntity } from '@/users/entity/user.entity';
+import { UserEntity } from '@/user/entity/user.entity';
 import { Auth } from '@/auth/decorator';
 
 @Controller('users')
 @ApiTags('Users')
-export class UsersController {
-  logger = new Logger('UsersController');
+export class UserController {
+  logger = new Logger('UserController');
 
   // eslint-disable-next-line no-unused-vars
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly userService: UserService) { }
 
   @Get()
   @ApiOkResponse({ description: '성공', type: () => UserEntity, isArray: true, })
@@ -28,7 +28,7 @@ export class UsersController {
     description: '모든 유저를 조회합니다.',
   })
   async getUsers() {
-    return this.usersService.getUsers();
+    return this.userService.getUsers();
   }
 
   @Get(':id')
@@ -43,7 +43,7 @@ export class UsersController {
     description: 'id를 입력합니다.',
   })
   async getUser(@Param('id') id: number) {
-    return this.usersService.getUser(id);
+    return this.userService.getUser(id);
   }
 
   @Patch(':id')
@@ -64,6 +64,6 @@ export class UsersController {
     description: '수정된 유저 데이터를 전달합니다.',
   })
   async updateUser(@Param('id') id: number, @Body() updateUserDTO: UpdateUserDTO) {
-    return this.usersService.updateUser(id, updateUserDTO);
+    return this.userService.updateUser(id, updateUserDTO);
   }
 }

@@ -3,10 +3,9 @@ import bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
-import { UsersService } from '@/users/users.service';
 import { UserResDTO } from './dto';
-import { CreateUserDTO } from '@/users/dto/create-user.dto';
-import { UserEntity } from '@/users/entity/user.entity';
+import { CreateUserDTO } from '@/user/dto/create-user.dto';
+import { UserEntity } from '@/user/entity/user.entity';
 import { IAccessTokenInfo, IRefreshToken } from './types/token-info.types';
 import { ITokenOptions } from './types/tokens-info.types';
 import { TokenPayload } from './types/token-payload.types';
@@ -16,8 +15,6 @@ export class AuthService {
   constructor(
     // eslint-disable-next-line no-unused-vars
     private readonly prisma: PrismaService,
-    // eslint-disable-next-line no-unused-vars
-    private readonly usersService: UsersService,
     // eslint-disable-next-line no-unused-vars
     private readonly jwtService: JwtService,
     // eslint-disable-next-line no-unused-vars

@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import Joi from '@hapi/joi';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
-import { UsersModule } from './users/users.module';
+import { UserModule } from './user/user.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { WithdrawalModule } from './withdrawal/withdrawal.module';
 import { FileModule } from './file/file.module';
@@ -21,7 +21,7 @@ import { FileModule } from './file/file.module';
     }),
     AuthModule,
     PrismaModule,
-    UsersModule,
+    UserModule,
     WithdrawalModule,
     FileModule,
   ],
