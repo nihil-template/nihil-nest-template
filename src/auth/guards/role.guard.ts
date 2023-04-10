@@ -1,9 +1,10 @@
-import { CanActivate, ExecutionContext } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UserRole } from '@prisma/client';
 import { Observable } from 'rxjs';
 import { UserEntity } from '@/users/entity/user.entity';
 
+@Injectable()
 export class RolesGuard implements CanActivate {
   // eslint-disable-next-line no-unused-vars
   constructor(private readonly reflector: Reflector) {}

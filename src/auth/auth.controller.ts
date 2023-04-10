@@ -7,14 +7,12 @@ import {
 } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { AuthService } from './auth.service';
-import { GetUser } from './get.user.decorator';
+import { GetUser, Public, Auth } from './decorator';
 import { JwtRefreshAuthGuard, LocalAuthGuard } from './guards';
-import { Public } from './public.decorator';
 import { SignInDTO, UserResDTO } from './dto';
 import { ErrorResponseDTO, HttpErrorDTO } from '@/common/dto';
 import { CreateUserDTO } from '@/users/dto/create-user.dto';
 import { UserEntity } from '@/users/entity/user.entity';
-import { Auth } from './decorator/auth.decorator';
 
 @Controller('auth')
 @ApiTags('Auth')

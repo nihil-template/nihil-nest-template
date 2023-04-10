@@ -11,7 +11,7 @@ import { UsersService } from './users.service';
 import { UpdateUserDTO } from './dto/update-user.dto';
 import { HttpErrorDTO } from '@/common/dto';
 import { UserEntity } from '@/users/entity/user.entity';
-import { Auth } from '@/auth/decorator/auth.decorator';
+import { Auth } from '@/auth/decorator';
 
 @Controller('users')
 @ApiTags('Users')

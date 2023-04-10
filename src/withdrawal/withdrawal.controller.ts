@@ -9,9 +9,9 @@ import { WithdrawalService } from './withdrawal.service';
 import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
 import { HttpErrorDTO } from '@/common/dto';
 import { WithdrawalEntity } from './entity/withdrawal.entity';
-import { Auth } from '@/auth/decorator/auth.decorator';
+import { Auth } from '@/auth/decorator';
 
-@Controller('withdrawal')
+@Controller('withdrawals')
 @ApiTags('Withdrawal')
 export class WithdrawalController {
   constructor(
