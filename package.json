@@ -15,12 +15,12 @@
     "build": "nest build",
     "n:dev": "nest start --watch",
     "n:start": "nest start",
-    "p:init": "yarn prisma init",
-    "p:create": "yarn prisma migrate dev --create-only",
-    "p:migrate": "yarn prisma migrate dev",
-    "p:push": "yarn prisma db push",
-    "p:pull": "yarn prisma db pull",
-    "p:studio": "yarn prisma studio"
+    "p:init": "npx prisma init",
+    "p:create": "npx prisma migrate dev --create-only",
+    "p:migrate": "npx prisma migrate dev",
+    "p:push": "npx prisma db push",
+    "p:pull": "npx prisma db pull",
+    "p:studio": "npx prisma studio"
   },
   "keywords": [],
   "author": "NIHILncunia",
