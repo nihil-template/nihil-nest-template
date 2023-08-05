@@ -34,7 +34,8 @@ module.exports = {
     'consistent-return': 'off',
     'no-nested-ternary': 'off',
     quotes: [ 'warn', 'single', { allowTemplateLiterals: true, }, ],
-    semi: [ 'error', 'always', ],
+    semi: 'off',
+    'no-extra-semi': 'off',
     'array-bracket-spacing': [
       'warn',
       'always',
@@ -67,6 +68,7 @@ module.exports = {
     'lines-between-class-members': 'off',
     'arrow-body-style': 'off',
     'no-tabs': [ 'warn', { allowIndentationTabs: true, }, ],
+    'no-empty-function': 'off',
 
     // 임포트 규칙
     'import/extensions': 'off',
@@ -76,6 +78,8 @@ module.exports = {
     'import/prefer-default-export': 'off',
 
     // 타입스크립트 규칙
+    '@typescript-eslint/semi': [ 'error', 'always', ],
+    '@typescript-eslint/no-extra-semi': 'error',
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',

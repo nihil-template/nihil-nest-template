@@ -6,62 +6,54 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  active
+  inactive
+  withdrawal
+}
+
+enum UserRole {
+  user
+  admin
 }
 
 model User {
   id         Int          @id @default(autoincrement())
-  email      String       @unique
   userName   String       @unique
-  role       UserRole     @default(USER)
-  status     UserStatus   @default(ACTIVE)
+  email      String       @unique
+  status     UserStatus   @default(active)
+  role       UserRole     @default(user)
   created    DateTime     @default(now())
   updated    DateTime     @updatedAt
-  UserAuth   UserAuth[]
-  UserToken  UserToken[]
+  auth       UserAuth[]
   Withdrawal Withdrawal[]
 
   @@map("user")
 }
 
-enum UserStatus {
-  WITHDRAW
-  ACTIVE
-  INACTIVE
-}
-
-enum UserRole {
-  USER
-  ADMIN
-}
-
 model UserAuth {
-  id             Int    @id @default(autoincrement())
-  user           User   @relation(fields: [userId], references: [id], map: "user_auth_user_id_fk")
-  userId         Int    @unique
-  hashedPassword String @db.VarChar(300)
+  id             Int     @id @default(autoincrement())
+  userId         Int     @unique
+  hashedPassword String
+  refreshToken   String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId], map: "user_auth_user_id_fk")
   @@map("user_auth")
 }
 
-model UserToken {
-  id                 Int     @id @default(autoincrement())
-  user               User    @relation(fields: [userId], references: [id], map: "user_token_user_id_fk")
-  userId             Int     @unique
-  hashedRefreshToken String? @db.VarChar(300)
-
-  @@index([userId], map: "user_token_user_id_fk")
-  @@map("user_token")
-}
-
 model Withdrawal {
   id      Int      @id @default(autoincrement())
-  user    User     @relation(fields: [userId], references: [id], map: "withdrawal_user_id_fk")
   userId  Int      @unique
-  text    String?  @default("입력된 내용이 없습니다.") @db.VarChar(1000)
+  text    String?
   created DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 
   @@index([userId], map: "withdrawal_user_id_fk")
   @@map("withdrawal")

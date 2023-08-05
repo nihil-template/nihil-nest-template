@@ -1,12 +1,12 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import Joi from 'joi';
-import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
-import { UserModule } from './user/user.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
-import { WithdrawalModule } from './withdrawal/withdrawal.module';
-import { FileModule } from './file/file.module';
+import { AppService } from './app.service';
+import { AppController } from './app.controller';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -19,12 +19,12 @@ import { FileModule } from './file/file.module';
         JWT_REFRESH_EXP: Joi.string().required(),
       }),
     }),
-    AuthModule,
     PrismaModule,
-    UserModule,
-    WithdrawalModule,
-    FileModule,
+    AuthModule,
+    UsersModule,
   ],
+  providers: [ AppService, ],
+  controllers: [ AppController, ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): any {

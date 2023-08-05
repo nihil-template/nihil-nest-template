@@ -1,14 +1,12 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import bcrypt from 'bcryptjs';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+import { User } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
-import { UserResDTO } from './dto';
-import { CreateUserDTO } from '@/user/dto/create-user.dto';
-import { UserEntity } from '@/user/entity/user.entity';
-import { IAccessTokenInfo, IRefreshToken } from './types/token-info.types';
-import { ITokenOptions } from './types/tokens-info.types';
+import { UserWithToken } from '@/common/entity/users.entity';
 import { TokenPayload } from './types/token-payload.types';
+import { SignUpDto } from './dto/sign-up.dto';
 
 @Injectable()
 export class AuthService {
@@ -19,11 +17,11 @@ export class AuthService {
     private readonly jwtService: JwtService,
     // eslint-disable-next-line no-unused-vars
     private readonly configService: ConfigService
-  ) { }
+  ) {}
 
-  // 회원가입
-  async signUp(createUserDTO: CreateUserDTO): Promise<UserResDTO> {
-    const { email, userName, password, } = createUserDTO;
+  // ==================== 회원가입 ====================
+  async signUp(signUpDto: SignUpDto): Promise<User> {
+    const { email, userName, password, } = signUpDto;
 
     const emailCheck = await this.prisma.user.findUnique({
       where: { email, },
@@ -76,30 +74,115 @@ export class AuthService {
       data: {
         userId: user.id,
         hashedPassword,
+        refreshToken: null,
       },
     });
 
-    await this.prisma.userToken.create({
-      data: {
+    return user;
+  }
+
+  // ==================== 아이디 패스워드 검증 ====================
+  async validateUser(email: string, password: string): Promise<UserWithToken> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      throw new HttpException({
+        message: '존재하지 않는 사용자입니다.',
+      }, HttpStatus.BAD_REQUEST);
+    }
+
+    const userAuth = await this.prisma.userAuth.findUnique({
+      where: {
         userId: user.id,
-        hashedRefreshToken: null,
+      },
+    });
+
+    const passwordCheck = await this.compareData(
+      password,
+      userAuth.hashedPassword
+    );
+
+    if (passwordCheck) {
+      return user;
+    } else {
+      throw new HttpException({
+        message: '비밀번호가 일치하지 않습니다.',
+      }, HttpStatus.UNAUTHORIZED);
+    }
+  }
+
+  // ==================== 로그인 ====================
+  async signIn(user: User): Promise<UserWithToken> {
+    const accessToken = await this.createAccessToken(user);
+    const refreshToken = await this.createRefreshToken(user);
+
+    const accessInfo = await this.verifyToken(accessToken, 'accessToken');
+    const refreshInfo = await this.verifyToken(refreshToken, 'refreshToken');
+
+    await this.prisma.userAuth.update({
+      where: {
+        userId: user.id,
+      },
+      data: {
+        refreshToken,
       },
     });
 
     return {
-      message: '회원가입이 완료되었습니다.',
-      user,
+      ...user,
+      accessToken,
+      refreshToken,
+      accessExp: accessInfo.exp,
+      refreshExp: refreshInfo.exp,
     };
   }
 
-  //액세스 토큰 생성
-  async createAccessToken(user: UserEntity): Promise<IAccessTokenInfo> {
+  // ==================== 로그아웃 ====================
+  async signOut(user: User): Promise<void> {
+    await this.prisma.userAuth.update({
+      where: {
+        userId: user.id,
+      },
+      data: {
+        refreshToken: null,
+      },
+    });
+  }
+
+  // ==================== 회원탈퇴 ====================
+  async withdrawalUser(user: User): Promise<void> {
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        status: 'withdrawal',
+      },
+    });
+
+    await this.prisma.userAuth.update({
+      where: {
+        userId: user.id,
+      },
+      data: {
+        refreshToken: null,
+      },
+    });
+  }
+
+  // ==================== 액세스 토큰 생성 ====================
+  async createAccessToken(user: UserWithToken): Promise<string> {
     const {
       id, email, userName, role,
     } = user;
-    const AccessToken = await this.jwtService.signAsync(
+
+    const accessToken = await this.jwtService.signAsync(
       {
-        id, email, userName, role,
+        sub: id, email, userName, role,
       },
       {
         algorithm: 'HS256',
@@ -108,23 +191,18 @@ export class AuthService {
       }
     );
 
-    return {
-      AccessToken,
-      domain: 'localhost',
-      path: '/',
-      httpOnly: true,
-      maxAge: Number(this.configService.get('JWT_EXP')) * 1000,
-    };
+    return accessToken;
   }
 
-  //액세스 토큰 생성
-  async createRefreshToken(user: UserEntity): Promise<IRefreshToken> {
+  // ==================== 리프레시 토큰 생성 ====================
+  async createRefreshToken(user: UserWithToken): Promise<string> {
     const {
       id, email, userName, role,
     } = user;
-    const RefreshToken = await this.jwtService.signAsync(
+
+    const refreshToken = await this.jwtService.signAsync(
       {
-        id, email, userName, role,
+        sub: id, email, userName, role,
       },
       {
         algorithm: 'HS256',
@@ -133,134 +211,76 @@ export class AuthService {
       }
     );
 
-    return {
-      RefreshToken,
-      domain: 'localhost',
-      path: '/',
-      httpOnly: true,
-      maxAge: Number(this.configService.get('JWT_REFRESH_EXP')) * 1000,
-    };
+    return refreshToken;
   }
 
-  // 토큰 정보 제거
-  signOutWithTokenClear(): ITokenOptions {
-    return {
-      accessOption: {
-        domain: 'localhost',
-        path: '/',
-        httpOnly: true,
-        maxAge: 0,
-      },
-      refreshOption: {
-        domain: 'localhost',
-        path: '/',
-        httpOnly: true,
-        maxAge: 0,
-      },
-    };
-  }
-
-  // 로그인시 아이디 비밀번호 체크
-  async validateUser(email: string, password: string): Promise<UserEntity> {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-
-    if (!user) {
-      throw new HttpException(
-        {
-          message: '존재하지 않는 사용자입니다.',
-        },
-        HttpStatus.BAD_REQUEST
-      );
-    }
-
-    const userAuth = await this.prisma.userAuth.findUnique({
-      where: { userId: user.id, },
-    });
-
-    const isMatch = await this.compareData(password, userAuth.hashedPassword);
-
-    if (!isMatch) {
-      throw new HttpException(
-        {
-          message: '비밀번호가 일치하지 않습니다.',
-        },
-        HttpStatus.UNAUTHORIZED
-      );
-    }
-
-    delete user.status;
-
-    return user;
-  }
-
-  // 데이터 암호화
+  // ==================== 데이터암호화 ====================
   async hashData(data: string): Promise<string> {
-    const hashedData = await bcrypt.hash(data, 10);
-
-    return hashedData;
+    const salt = await bcrypt.genSalt(10);
+    return bcrypt.hash(data, salt);
   }
 
-  // 암호화 데이터 검증
-  async compareData(rawData: string, data: string): Promise<boolean> {
-    const res = await bcrypt.compare(rawData, data);
-
-    return res;
+  // ==================== 데이터검증 ====================
+  async compareData(data: string, hashedData: string): Promise<boolean> {
+    return bcrypt.compare(data, hashedData);
   }
 
-  // 리프레시 토큰 검증
-  async refreshTokenMatches(id: number, refreshToken: string): Promise<UserEntity> {
+  // ==================== 토큰검증 ====================
+  async verifyToken(token: string, mode: string): Promise<TokenPayload> {
+    const secret = mode === 'accessToken'
+      ? this.configService.get('JWT_SECRET')
+      : this.configService.get('JWT_REFRESH_SECRET');
+
+    return this.jwtService.verify(token, {
+      secret,
+    }) as TokenPayload;
+  }
+
+  // ==================== 토큰 재발급 ====================
+  async tokenRefresh(id: number, refreshToken: string): Promise<UserWithToken> {
     const user = await this.prisma.user.findUnique({
       where: { id, },
     });
 
-    const userToken = await this.prisma.userToken.findUnique({
-      where: { userId: id, },
-    });
-
-    const isRefreshTokenMatching = await this.compareData(
-      refreshToken,
-      userToken.hashedRefreshToken
-    );
-
-    if (isRefreshTokenMatching) {
-      delete userToken.hashedRefreshToken;
-
-      return user;
+    if (!user) {
+      throw new HttpException({
+        message: '인증 정보가 올바르지 않습니다.',
+      }, HttpStatus.UNAUTHORIZED);
     }
-  }
 
-  // 리프레시 토큰 업데이트
-  async updateRefreshToken(id: number, refreshToken: string): Promise<void> {
-    const hashedRefreshToken = await this.hashData(refreshToken);
-
-    await this.prisma.userToken.update({
-      where: { userId: id, },
-      data: {
-        hashedRefreshToken,
+    const userAuth = await this.prisma.userAuth.findUnique({
+      where: {
+        userId: user.id,
       },
     });
-  }
 
-  // 리프레시 토큰 제거
-  async deleteRefreshToken(id: number): Promise<void> {
-    await this.prisma.userToken.update({
-      where: { userId: id, },
-      data: {
-        hashedRefreshToken: null,
-      },
-    });
-  }
+    if (refreshToken === userAuth.refreshToken) {
+      const accessToken = await this.createAccessToken(user);
+      const refreshToken = await this.createRefreshToken(user);
 
-  // 토큰 분해
-  async verifyToken(token: string): Promise<TokenPayload> {
-    const verifiedToken = await this.jwtService.verifyAsync(token, {
-      secret: this.configService.get('JWT_SECRET'),
-    });
+      const accessInfo = await this.verifyToken(accessToken, 'accessToken');
+      const refreshInfo = await this.verifyToken(refreshToken, 'refreshToken');
 
-    return verifiedToken;
+      await this.prisma.userAuth.update({
+        where: {
+          userId: user.id,
+        },
+        data: {
+          refreshToken,
+        },
+      });
+
+      return {
+        ...user,
+        accessToken,
+        refreshToken,
+        accessExp: accessInfo.exp,
+        refreshExp: refreshInfo.exp,
+      };
+    } else {
+      throw new HttpException({
+        message: '인증 정보가 올바르지 않습니다.',
+      }, HttpStatus.UNAUTHORIZED);
+    }
   }
 }
