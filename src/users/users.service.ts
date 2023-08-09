@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UpdateUserDto, UpdateUserAdminDto, UpdatePasswordDto } from './dto';
@@ -15,7 +15,13 @@ export class UsersService {
 
   // ==================== 모든 유저 가져오기 ====================
   async getAllUser(): Promise<User[]> {
-    return this.prisma.user.findMany();
+    return this.prisma.user.findMany({
+      where: {
+        NOT: {
+          status: 'withdrawal',
+        },
+      },
+    });
   }
 
   // ==================== 개별 유저 가져오기 ====================
@@ -23,13 +29,16 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({
       where: {
         id,
+        NOT: {
+          status: 'withdrawal',
+        },
       },
     });
 
     if (!user) {
-      throw new HttpException({
-        message: '존재하지 않는 유저입니다.',
-      }, HttpStatus.NOT_FOUND);
+      throw new NotFoundException([
+        '존재하지 않는 유저입니다.',
+      ]);
     }
 
     return user;

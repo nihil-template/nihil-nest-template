@@ -1,4 +1,6 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException, Injectable, UnauthorizedException
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -25,41 +27,40 @@ export class AuthService {
     const { email, userName, password, } = signUpDto;
 
     const emailCheck = await this.prisma.user.findUnique({
-      where: { email, },
+      where: {
+        email,
+        NOT: {
+          status: 'withdrawal',
+        },
+      },
     });
 
     const userNameCheck = await this.prisma.user.findUnique({
-      where: { userName, },
+      where: {
+        userName,
+        NOT: {
+          status: 'withdrawal',
+        },
+      },
     });
 
     if (emailCheck && userNameCheck) {
-      throw new HttpException(
-        {
-          message: [
-            '이미 존재하는 이메일입니다.',
-            '이미 존재하는 닉네임입니다.',
-          ],
-        },
-        HttpStatus.BAD_REQUEST
-      );
+      throw new BadRequestException({
+        email: '이미 존재하는 이메일입니다.',
+        userName: '이미 존재하는 별명입니다.',
+      });
     }
 
     if (emailCheck) {
-      throw new HttpException(
-        {
-          message: [ '이미 존재하는 이메일입니다.', ],
-        },
-        HttpStatus.BAD_REQUEST
-      );
+      throw new BadRequestException({
+        email: '이미 존재하는 이메일입니다.',
+      });
     }
 
     if (userNameCheck) {
-      throw new HttpException(
-        {
-          message: [ '이미 존재하는 닉네임입니다.', ],
-        },
-        HttpStatus.BAD_REQUEST
-      );
+      throw new BadRequestException({
+        userName: '이미 존재하는 별명입니다.',
+      });
     }
 
     const hashedPassword = await this.hashData(password);
@@ -87,13 +88,16 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: {
         email,
+        NOT: {
+          status: 'withdrawal',
+        },
       },
     });
 
     if (!user) {
-      throw new HttpException({
-        message: '존재하지 않는 사용자입니다.',
-      }, HttpStatus.BAD_REQUEST);
+      throw new BadRequestException([
+        '존재하지 않는 사용자입니다.',
+      ]);
     }
 
     const userAuth = await this.prisma.userAuth.findUnique({
@@ -110,9 +114,9 @@ export class AuthService {
     if (passwordCheck) {
       return user;
     } else {
-      throw new HttpException({
-        message: '비밀번호가 일치하지 않습니다.',
-      }, HttpStatus.UNAUTHORIZED);
+      throw new UnauthorizedException([
+        '비밀번호가 일치하지 않습니다.',
+      ]);
     }
   }
 
@@ -175,6 +179,7 @@ export class AuthService {
       },
       data: {
         refreshToken: null,
+        hashedPassword: null,
       },
     });
   }
@@ -248,9 +253,9 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new HttpException({
-        message: '인증 정보가 올바르지 않습니다.',
-      }, HttpStatus.UNAUTHORIZED);
+      throw new UnauthorizedException([
+        '인증 정보가 올바르지 않습니다.',
+      ]);
     }
 
     const userAuth = await this.prisma.userAuth.findUnique({
@@ -287,9 +292,9 @@ export class AuthService {
         tokens,
       };
     } else {
-      throw new HttpException({
-        message: '인증 정보가 올바르지 않습니다.',
-      }, HttpStatus.UNAUTHORIZED);
+      throw new UnauthorizedException([
+        '인증 정보가 올바르지 않습니다.',
+      ]);
     }
   }
 }
