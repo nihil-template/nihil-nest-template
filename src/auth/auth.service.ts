@@ -4,9 +4,10 @@ import bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
-import { UserWithToken } from '@/common/entity/users.entity';
 import { TokenPayload } from './types/token-payload.types';
 import { SignUpDto } from './dto/sign-up.dto';
+import { Tokens } from './types/tokens.types';
+import { UserWithTokens } from './types/user-with-tokens.types';
 
 @Injectable()
 export class AuthService {
@@ -82,7 +83,7 @@ export class AuthService {
   }
 
   // ==================== 아이디 패스워드 검증 ====================
-  async validateUser(email: string, password: string): Promise<UserWithToken> {
+  async validateUser(email: string, password: string): Promise<User> {
     const user = await this.prisma.user.findUnique({
       where: {
         email,
@@ -116,7 +117,7 @@ export class AuthService {
   }
 
   // ==================== 로그인 ====================
-  async signIn(user: User): Promise<UserWithToken> {
+  async signIn(user: User): Promise<UserWithTokens> {
     const accessToken = await this.createAccessToken(user);
     const refreshToken = await this.createRefreshToken(user);
 
@@ -132,12 +133,16 @@ export class AuthService {
       },
     });
 
-    return {
-      ...user,
+    const tokens: Tokens = {
       accessToken,
       refreshToken,
       accessExp: accessInfo.exp,
       refreshExp: refreshInfo.exp,
+    };
+
+    return {
+      user,
+      tokens,
     };
   }
 
@@ -175,7 +180,7 @@ export class AuthService {
   }
 
   // ==================== 액세스 토큰 생성 ====================
-  async createAccessToken(user: UserWithToken): Promise<string> {
+  async createAccessToken(user: User): Promise<string> {
     const {
       id, email, userName, role,
     } = user;
@@ -195,7 +200,7 @@ export class AuthService {
   }
 
   // ==================== 리프레시 토큰 생성 ====================
-  async createRefreshToken(user: UserWithToken): Promise<string> {
+  async createRefreshToken(user: User): Promise<string> {
     const {
       id, email, userName, role,
     } = user;
@@ -237,7 +242,7 @@ export class AuthService {
   }
 
   // ==================== 토큰 재발급 ====================
-  async tokenRefresh(id: number, refreshToken: string): Promise<UserWithToken> {
+  async tokenRefresh(id: number, refreshToken: string): Promise<UserWithTokens> {
     const user = await this.prisma.user.findUnique({
       where: { id, },
     });
@@ -270,12 +275,16 @@ export class AuthService {
         },
       });
 
-      return {
-        ...user,
+      const tokens: Tokens = {
         accessToken,
         refreshToken,
         accessExp: accessInfo.exp,
         refreshExp: refreshInfo.exp,
+      };
+
+      return {
+        user,
+        tokens,
       };
     } else {
       throw new HttpException({

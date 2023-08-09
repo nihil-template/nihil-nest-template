@@ -7,8 +7,8 @@ import { AuthService } from './auth.service';
 import { Auth, GetUser } from './decorator';
 import { JwtRefreshAuthGuard, LocalAuthGuard } from './guard';
 import { SignUpDto } from './dto/sign-up.dto';
-import { UserWithToken } from '@/common/entity/users.entity';
 import { TokenPayload } from './types/token-payload.types';
+import { UserWithTokens } from './types/user-with-tokens.types';
 
 @Controller('auth')
 export class AuthController {
@@ -28,7 +28,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   async signin(
     @GetUser() user: User
-  ): Promise<UserWithToken> {
+  ): Promise<UserWithTokens> {
     return this.authService.signIn(user);
   }
 
@@ -49,7 +49,7 @@ export class AuthController {
   // ==================== 액세스 토큰 갱신 ====================
   @Get('/refresh')
   @UseGuards(JwtRefreshAuthGuard)
-  async refreshToken(@GetUser() user: TokenPayload) {
+  async refreshToken(@GetUser() user: TokenPayload): Promise<UserWithTokens> {
     return this.authService.tokenRefresh(user.sub, user.refreshToken);
   }
 
