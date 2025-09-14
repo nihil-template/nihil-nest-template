@@ -1,0 +1,453 @@
+import { MailerService } from '@nestjs-modules/mailer';
+import { UsersService } from '@/users/users.service';
+import {
+  Inject,
+  Injectable
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import {
+  ChangePasswordDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  SignInDto,
+  CreateUserDto,
+  WithdrawDto,
+  ResponseDto,
+  UserInfoDto
+} from '@repo/dto';
+
+import bcrypt from 'bcrypt';
+import { messages } from '@repo/message';
+import { cloneDeep } from 'lodash';
+import { schemas } from '@/drizzle/schemas';
+import { DRIZZLE } from '@/drizzle/drizzle.module';
+import type { UserRoleType } from '@repo/drizzle';
+import { createResponse, createError } from '@/utils';
+import { UserRepository } from '../repositories/user.repository';
+
+// JWT Payload 타입 정의
+interface JwtPayload {
+  userNo: number;
+  emlAddr: string;
+  userNm: string;
+  userRole: UserRoleType;
+}
+
+interface ResetPasswordPayload {
+  userNo: number;
+  purpose: 'reset-password';
+}
+
+@Injectable()
+export class AuthService {
+  constructor(
+    @Inject(DRIZZLE)
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
+    private readonly userRepository: UserRepository,
+    private readonly configService: ConfigService
+  ) { }
+
+  users = schemas.userInfo;
+
+  /**
+   * 회원가입
+   * @param signUpData 회원가입 데이터
+   * @returns 회원가입 결과
+   */
+  async signUp(signUpData: CreateUserDto): Promise<ResponseDto<UserInfoDto>> {
+    // 이메일 중복 확인
+    const existingUser = await this.userRepository.findByEmail(signUpData.emlAddr);
+
+    if (existingUser) {
+      return createError('CONFLICT', 'CONFLICT_EMAIL');
+    }
+
+    // 비밀번호 해시화
+    const hashedPassword = await bcrypt.hash(signUpData.password, 10);
+
+    // 일반 사용자 계정 생성
+    const newUser = await this.userRepository.createUser(signUpData, hashedPassword);
+
+    return createResponse(
+      'SUCCESS',
+      'SIGN_UP_SUCCESS',
+      newUser as UserInfoDto
+    );
+  }
+
+  /**
+   * 로그인
+   * @param signInData 로그인 데이터
+   * @returns 로그인 결과 데이터 (토큰 정보 포함)
+   */
+  async signIn(signInData: SignInDto): Promise<{
+    user: UserInfoDto;
+    acsToken: string;
+    reshToken: string;
+    accessTokenExpiresAt: number;
+  } | {
+    error: boolean;
+    code: string;
+    message: string;
+    data: null;
+  }> {
+    const { emlAddr, password, } = signInData;
+
+    // 사용자 조회
+    const user = await this.userRepository.findByEmail(emlAddr);
+
+    if (!user) {
+      return createError('UNAUTHORIZED', 'INVALID_CREDENTIALS');
+    }
+
+    console.log(password);
+    console.log(user.encptPswd);
+
+    // 비밀번호 검증
+    const isPasswordMatching = await bcrypt.compare(password, user.encptPswd);
+
+    if (!isPasswordMatching) {
+      return createError('UNAUTHORIZED', 'INVALID_CREDENTIALS');
+    }
+
+    // JWT 페이로드 생성
+    const payload: JwtPayload = {
+      userNo: user.userNo,
+      emlAddr: user.emlAddr,
+      userNm: user.userNm,
+      userRole: user.userRole,
+    };
+
+    // 토큰 생성
+    const [ acsToken, reshToken, ] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get('jwt.access.secret'),
+        expiresIn: this.configService.get('jwt.access.expiresIn'),
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get('jwt.refresh.secret'),
+        expiresIn: this.configService.get('jwt.refresh.expiresIn'),
+      }),
+    ]);
+
+    // 리프레시 토큰과 마지막 로그인 시간 업데이트
+    await this.userRepository.updateSignInInfo(user.userNo, reshToken);
+
+    // AccessToken 만료시간 계산
+    const accessTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000).getTime();
+
+    // 응답용 사용자 데이터 준비
+    const userToReturn = cloneDeep(user);
+    userToReturn.encptPswd = null;
+    userToReturn.reshToken = null;
+
+    return {
+      user: userToReturn as UserInfoDto,
+      acsToken,
+      reshToken,
+      accessTokenExpiresAt,
+    };
+  }
+
+  /**
+   * 토큰 재발급
+   * @param token 리프레시 토큰
+   * @returns 재발급된 토큰 정보 또는 에러
+   */
+  async refresh(token: string): Promise<{
+    user: UserInfoDto;
+    acsToken: string;
+    reshToken: string;
+    accessTokenExpiresAt: number;
+  } | {
+    error: boolean;
+    code: string;
+    message: string;
+    data: null;
+  }> {
+    if (!token) {
+      return createError('UNAUTHORIZED', 'REFRESH_TOKEN_NOT_FOUND');
+    }
+
+    try {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
+        secret: this.configService.get('jwt.refresh.secret'),
+      });
+
+      const user = await this.usersService.getUserById(payload.userNo);
+
+      if (!user || user.reshToken !== token) {
+        return createError('UNAUTHORIZED', 'INVALID_REFRESH_TOKEN');
+      }
+
+      const newPayload: JwtPayload = {
+        userNo: user.userNo,
+        emlAddr: user.emlAddr,
+        userNm: user.userNm,
+        userRole: user.userRole,
+      };
+      const [ newAcsToken, newReshToken, ] = await Promise.all([
+        this.jwtService.signAsync(newPayload, {
+          secret: this.configService.get('jwt.access.secret'),
+          expiresIn: this.configService.get('jwt.access.expiresIn'),
+        }),
+        this.jwtService.signAsync(newPayload, {
+          secret: this.configService.get('jwt.refresh.secret'),
+          expiresIn: this.configService.get('jwt.refresh.expiresIn'),
+        }),
+      ]);
+
+      await this.userRepository.updateRefreshToken(user.userNo, newReshToken);
+
+      // AccessToken 만료시간 계산
+      const accessTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000).getTime();
+
+      const userToReturn = cloneDeep(user);
+      userToReturn.encptPswd = null;
+      userToReturn.reshToken = null;
+      return { user: userToReturn as UserInfoDto, acsToken: newAcsToken, reshToken: newReshToken, accessTokenExpiresAt, };
+    }
+    catch {
+      return createError('UNAUTHORIZED', 'INVALID_REFRESH_TOKEN');
+    }
+  }
+
+  /**
+   * 로그아웃
+   * @param accessToken 액세스 토큰
+   * @returns 로그아웃 결과
+   */
+  async signOut(accessToken: string): Promise<ResponseDto<null>> {
+    try {
+      // JWT 토큰에서 사용자 정보 추출
+      const decoded = await this.extractUserFromToken(accessToken);
+
+      if (decoded?.userNo) {
+        // 리프레시 토큰 삭제
+        await this.userRepository.clearRefreshToken(decoded.userNo);
+      }
+
+      return createResponse('SUCCESS', 'SIGN_OUT_SUCCESS', null);
+    }
+    catch {
+      // 로그아웃은 토큰이 유효하지 않아도 성공으로 처리
+      // 사용자가 이미 로그아웃된 상태이거나 토큰이 만료된 경우
+      return createResponse('SUCCESS', 'SIGN_OUT_SUCCESS', null);
+    }
+  }
+
+  /**
+   * 세션 조회
+   * @param userNo 사용자 No
+   * @returns 세션 정보
+   */
+  async session(userNo: number): Promise<ResponseDto<UserInfoDto>> {
+    const user = await this.userRepository.findByUserNo(userNo);
+
+    if (!user) {
+      return createError('UNAUTHORIZED', 'INVALID_CREDENTIALS');
+    }
+
+    const userToReturn = cloneDeep(user);
+    userToReturn.encptPswd = null;
+    userToReturn.reshToken = null;
+
+    return createResponse(
+      'SUCCESS',
+      'SIGN_IN_SUCCESS',
+      userToReturn as UserInfoDto
+    );
+  }
+
+  /**
+   * 회원탈퇴
+   * @param userNo 사용자 No
+   * @param withdrawData 회원탈퇴 데이터
+   * @returns 회원탈퇴 결과
+   */
+  async withdraw(userNo: number, withdrawData: WithdrawDto): Promise<ResponseDto<UserInfoDto>> {
+    const user = await this.userRepository.findByUserNo(userNo);
+
+    if (!user) {
+      return createError('UNAUTHORIZED', 'INVALID_CREDENTIALS');
+    }
+
+    const isPasswordMatching = await bcrypt.compare(
+      withdrawData.password,
+      user.encptPswd
+    );
+
+    if (!isPasswordMatching) {
+      return createError('UNAUTHORIZED', 'INVALID_CREDENTIALS');
+    }
+
+    // 하나의 쿼리로 탈퇴 처리 + 조회
+    const withdrawnUser = await this.userRepository.withdrawUser(userNo);
+
+    const userToReturn = cloneDeep(withdrawnUser);
+    userToReturn.encptPswd = null;
+    userToReturn.reshToken = null;
+
+    return createResponse(
+      'SUCCESS',
+      'WITHDRAW_SUCCESS',
+      userToReturn as UserInfoDto
+    );
+  }
+
+  /**
+   * 비밀번호 변경
+   * @param userNo 사용자 No
+   * @param changePasswordData 비밀번호 변경 데이터
+   * @returns 비밀번호 변경 결과
+   */
+  async changePassword(
+    userNo: number,
+    changePasswordData: ChangePasswordDto
+  ): Promise<ResponseDto<UserInfoDto>> {
+    const { currentPassword, newPassword, } = changePasswordData;
+
+    const user = await this.userRepository.findByUserNo(userNo);
+
+    if (!user) {
+      return createError('UNAUTHORIZED', 'INVALID_CREDENTIALS');
+    }
+
+    const isPasswordMatching = await bcrypt.compare(
+      currentPassword,
+      user.encptPswd
+    );
+
+    if (!isPasswordMatching) {
+      return createError('UNAUTHORIZED', 'INVALID_CREDENTIALS');
+    }
+
+    const newEncptPswd = await bcrypt.hash(newPassword, 10);
+
+    // 하나의 쿼리로 업데이트 + 조회
+    const updatedUser = await this.userRepository.updatePassword(userNo, newEncptPswd);
+
+    const userToReturn = cloneDeep(updatedUser);
+    userToReturn.encptPswd = null;
+    userToReturn.reshToken = null;
+
+    return createResponse(
+      'SUCCESS',
+      'PASSWORD_CHANGE_SUCCESS',
+      userToReturn as UserInfoDto
+    );
+  }
+
+  /**
+   * 비밀번호 찾기
+   * @param forgotPasswordData 비밀번호 찾기 데이터
+   * @returns 비밀번호 찾기 결과
+   */
+  async forgotPassword(
+    forgotPasswordData: ForgotPasswordDto
+  ): Promise<ResponseDto<null>> {
+    const { emlAddr, } = forgotPasswordData;
+    const user = await this.userRepository.findByEmail(emlAddr);
+
+    if (!user) {
+      return createResponse('SUCCESS', 'FORGOT_PASSWORD_SUCCESS', null);
+    }
+
+    const payload: ResetPasswordPayload = { userNo: user.userNo, purpose: 'reset-password', };
+    const resetToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.get('jwt.access.secret'),
+      expiresIn: '5m',
+    });
+
+    const appBaseUrl = /^https?:\/\//.test(this.configService.get('app.url'))
+      ? this.configService.get('app.url')
+      : 'http://localhost:3000';
+
+    const resetLink = `${appBaseUrl.replace(/\/$/, '')}/auth/reset-password?token=${resetToken}`;
+
+    try {
+      await this.mailerService.sendMail({
+        to: user.emlAddr,
+        from: `"No Reply" <${this.configService.get('nodemailer.auth.user')}>`,
+        subject: messages.auth.resetPasswordEmailSubject(this.configService.get('app.name')),
+        text: messages.auth.resetPasswordEmailText(resetLink),
+        html: messages.auth.resetPasswordEmailHtml(this.configService.get('app.name'), resetLink),
+      });
+    }
+    catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('메일 전송 실패:', { message: error.message, stack: error.stack, });
+      }
+      else {
+        console.error('메일 전송 실패:', error);
+      }
+    }
+
+    return createResponse('SUCCESS', 'FORGOT_PASSWORD_SUCCESS', null);
+  }
+
+  /**
+   * 새 비밀번호 설정
+   * @param newPasswordData 새 비밀번호 설정 데이터
+   * @returns 새 비밀번호 설정 결과
+   */
+  async newPassword(
+    newPasswordData: ResetPasswordDto
+  ): Promise<ResponseDto<UserInfoDto>> {
+    const { resetToken, newPassword, } = newPasswordData;
+
+    if (!resetToken || !newPassword) {
+      return createError('UNAUTHORIZED', 'RESET_TOKEN_AND_PASSWORD_REQUIRED');
+    }
+
+    try {
+      const payload = await this.jwtService
+        .verifyAsync<ResetPasswordPayload>(resetToken, {
+          secret: this.configService.get('jwt.access.secret'),
+        });
+
+      if (!payload || payload.purpose !== 'reset-password') {
+        return createError('UNAUTHORIZED', 'INVALID_TOKEN');
+      }
+
+      const encptPswd = await bcrypt.hash(newPassword, 10);
+
+      // 하나의 쿼리로 업데이트 + 조회
+      const updatedUser = await this.userRepository.updatePassword(payload.userNo, encptPswd);
+
+      const userToReturn = cloneDeep(updatedUser);
+      userToReturn.encptPswd = null;
+      userToReturn.reshToken = null;
+
+      return createResponse(
+        'SUCCESS',
+        'PASSWORD_CHANGE_SUCCESS',
+        userToReturn as UserInfoDto
+      );
+    }
+    catch {
+      return createError('UNAUTHORIZED', 'INVALID_OR_EXPIRED_RESET_TOKEN');
+    }
+  }
+
+  /**
+   * JWT 토큰에서 사용자 정보 추출
+   * @param token JWT 토큰
+   * @returns 사용자 정보 또는 null
+   */
+  async extractUserFromToken(token: string): Promise<JwtPayload | null> {
+    try {
+      const payload = await this.jwtService
+        .verifyAsync<JwtPayload>(token, {
+          secret: this.configService.get('jwt.access.secret'),
+        });
+      return payload;
+    }
+    catch {
+      return null;
+    }
+  }
+}

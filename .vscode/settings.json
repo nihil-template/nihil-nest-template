@@ -1,0 +1,46 @@
+{
+  // TypeScript import 설정 - NestJS 의존성 주입을 위해 type-only import 비활성화
+  "typescript.preferences.preferTypeOnlyAutoImports": false,
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.preferences.importModuleSpecifierEnding": "minimal",
+
+  // 자동 import 정리 설정
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",
+    "source.fixAll.eslint": "always"
+  },
+
+  // 포매팅 설정
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+
+  // NestJS 관련 파일 연결
+  "files.associations": {
+    "*.service.ts": "typescript",
+    "*.controller.ts": "typescript",
+    "*.module.ts": "typescript",
+    "*.guard.ts": "typescript",
+    "*.pipe.ts": "typescript",
+    "*.decorator.ts": "typescript",
+    "*.dto.ts": "typescript",
+    "*.entity.ts": "typescript"
+  },
+
+  // NestJS 프로젝트 기본 설정
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+
+  // TypeScript 엄격한 검사 설정
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.suggest.includeCompletionsForModuleExports": true,
+  "typescript.suggest.includeCompletionsWithInsertText": true,
+  "typescript.suggest.completeFunctionCalls": true,
+
+  // ESLint 설정
+  "eslint.workingDirectories": ["./"],
+  "eslint.validate": ["javascript", "typescript"]
+}
