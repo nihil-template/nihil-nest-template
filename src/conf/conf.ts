@@ -62,13 +62,13 @@ export const appConfig = registerAs('app', () => ({
   url: process.env.APP_URL || '설정하세요.',
 }));
 
-// 전체 설정 객체 (기본값)
-export default () => ({
-  server: serverConfig,
-  swagger: swaggerConfig,
-  jwt: jwtConfig,
-  nodemailer: nodemailerConfig,
-  initialAdmin: initialAdminConfig,
-  database: databaseConfig,
-  app: appConfig,
-});
+// 전체 설정 객체들을 배열로 내보내기
+export default [
+  serverConfig,
+  swaggerConfig,
+  jwtConfig,
+  nodemailerConfig,
+  initialAdminConfig,
+  databaseConfig,
+  appConfig,
+];

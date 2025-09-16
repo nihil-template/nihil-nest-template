@@ -1,320 +1,130 @@
 # Nest-Next-Mono Template - API Server
 
-Nest-Next-Mono Template의 NestJS API 서버입니다. NestJS와 Prisma를 활용한 타입 안전한 백엔드 API 서버로, JWT 인증, 사용자 관리, 이메일 서비스 등 풀스택 애플리케이션에 필요한 핵심 기능들을 제공합니다.
+## 1. 프로젝트 개요
 
-## 주요 기능
+Nest-Next-Mono Template의 NestJS API 서버입니다. NestJS와 Drizzle ORM을 활용한 타입 안전한 백엔드 API 서버로, JWT 인증, 사용자 관리, 이메일 서비스 등 풀스택 애플리케이션에 필요한 핵심 기능들을 제공합니다.
 
-- **🔐 인증 시스템**: JWT 기반 인증 (쿠키 저장)
-- **👥 사용자 관리**: 회원가입, 로그인, 프로필 관리
-- **📧 이메일 서비스**: 비밀번호 재설정 이메일
-- **🛡️ 보안**: API 요청 제한, CORS, Helmet
-- **📚 API 문서**: Swagger 자동 문서화
-- **🗄️ 데이터베이스**: Prisma ORM, PostgreSQL
-- **⚡ 성능**: 요청 제한, 캐싱, 최적화
+### 주요 기능
 
-## 기술 스택
+- 인증 시스템: JWT 기반 인증 (쿠키 저장)
+- 사용자 관리: 회원가입, 로그인, 프로필 관리
+- 이메일 서비스: 비밀번호 재설정 이메일
+- 보안: API 요청 제한, CORS, Helmet
+- API 문서: Swagger 자동 문서화
+- 데이터베이스: Drizzle ORM, PostgreSQL
+- 성능: 요청 제한, 캐싱, 최적화
+
+## 2. 프로젝트 스택
 
 ### 백엔드
 
-- **프레임워크**: NestJS 11
-- **언어**: TypeScript
-- **데이터베이스**: PostgreSQL + Prisma ORM
-- **인증**: JWT, Passport
-- **이메일**: Nodemailer
-- **문서화**: Swagger/OpenAPI
+- 프레임워크: NestJS 11
+- 언어: TypeScript
+- 데이터베이스: PostgreSQL + Drizzle ORM
+- 인증: JWT, Passport
+- 이메일: Nodemailer
+- 문서화: Swagger/OpenAPI
 
 ### 보안
 
-- **인증**: JWT 토큰 (쿠키 기반)
-- **요청 제한**: Throttler
-- **보안 헤더**: Helmet
-- **CORS**: Cross-Origin Resource Sharing
+- 인증: JWT 토큰 (쿠키 기반)
+- 요청 제한: Throttler
+- 보안 헤더: Helmet
+- CORS: Cross-Origin Resource Sharing
 
 ### 개발 도구
 
-- **패키지 관리**: pnpm
-- **린팅**: ESLint
-- **타입 체크**: TypeScript
-- **마이그레이션**: Prisma
+- 패키지 관리: pnpm
+- 린팅: ESLint
+- 타입 체크: TypeScript
+- 마이그레이션: Drizzle
 
-## 프로젝트 구조
+### 프로젝트 구조
 
 ```
-apps/api/
-├── src/
-│   ├── auth/              # 인증 모듈
-│   │   ├── auth.controller.ts
-│   │   ├── auth.service.ts
-│   │   ├── auth.module.ts
-│   │   ├── jwt.strategy.ts
-│   │   └── jwt-auth.guard.ts
-│   ├── users/             # 사용자 모듈
-│   │   ├── users.controller.ts
-│   │   ├── users.service.ts
-│   │   └── users.module.ts
-│   ├── prisma/            # Prisma 설정
-│   │   └── prisma.module.ts
-│   ├── app.module.ts      # 루트 모듈
-│   ├── main.ts           # 애플리케이션 진입점
-│   └── swagger.config.ts # Swagger 설정
-├── prisma/               # Prisma 스키마
-│   ├── schema.prisma
-│   └── migrations/
-└── messages/             # 다국어 메시지
+src/
+├── auth/              # 인증 모듈
+│   ├── auth.controller.ts
+│   ├── auth.service.ts
+│   ├── auth.module.ts
+│   ├── jwt.strategy.ts
+│   └── jwt-auth.guard.ts
+├── users/             # 사용자 모듈
+│   ├── users.controller.ts
+│   ├── users.service.ts
+│   └── users.module.ts
+├── admin/             # 관리자 모듈
+├── drizzle/           # Drizzle 설정
+├── repositories/      # 데이터 접근 계층
+├── utils/             # 유틸리티 함수
+├── conf/              # 설정 관리
+├── app.module.ts      # 루트 모듈
+└── main.ts           # 애플리케이션 진입점
 ```
 
-## 설치 및 실행
+## 3. 프로젝트의 규칙
 
-### 필수 요구사항
+### 아키텍처 규칙
 
-- Node.js 18+
-- pnpm 8+
-- PostgreSQL 데이터베이스
+1. **모듈 기반 구조**: 모든 기능은 NestJS 모듈로 분리하여 관리
+2. **계층 분리**: Controller → Service → Repository → Database 순서로 계층 분리
+3. **의존성 주입**: 모든 의존성은 NestJS DI 컨테이너를 통해 관리
+4. **글로벌 설정**: ConfigModule을 통한 중앙화된 설정 관리
 
-### 설치
+### 코드 규칙
 
-```bash
-# 의존성 설치
-pnpm install
+1. **타입 안전성**: 모든 데이터는 TypeScript 타입과 Zod 스키마로 검증
+2. **DTO 패턴**: 모든 API 입출력은 DTO를 통해 타입 안전하게 처리
+3. **Repository 패턴**: 데이터 접근 로직은 Repository 클래스로 분리
+4. **에러 처리**: createError, createResponse 유틸리티를 통한 일관된 응답 형식
 
-# 환경변수 설정
-cp .env.example .env
-```
+### 네이밍 규칙
 
-### 환경변수 설정
+1. **파일명**: kebab-case 사용 (auth.controller.ts)
+2. **클래스명**: PascalCase 사용 (AuthController)
+3. **메서드명**: camelCase 사용 (getUserInfo)
+4. **상수명**: UPPER_SNAKE_CASE 사용 (RESPONSE_CODE)
 
-```env
-# 데이터베이스 (필수)
-DATABASE_URL="postgresql://username:password@localhost:5432/your_database"
-```
+### API 규칙
 
-### 설정 관리
+1. **Swagger 문서화**: 모든 엔드포인트는 @ApiOperation, @ApiResponse 데코레이터 필수
+2. **인증 가드**: 보호된 엔드포인트는 @UseGuards(JwtAuthGuard) 필수
+3. **요청 제한**: 민감한 엔드포인트는 @Throttle 데코레이터로 제한
+4. **응답 형식**: 모든 API 응답은 createResponse 또는 createError로 통일
 
-**환경변수**: 데이터베이스 연결을 위한 `DATABASE_URL`만 사용
+### 데이터베이스 규칙
 
-**중앙화된 설정**: 나머지 모든 설정은 `@repo/config` 패키지를 통해 관리
+1. **Drizzle ORM**: Prisma 대신 Drizzle ORM 사용
+2. **스키마 분리**: @repo/drizzle 패키지에서 스키마 정의 후 임포트
+3. **Raw SQL**: 복잡한 쿼리는 Raw SQL 사용 (sql`` 템플릿 리터럴)
+4. **트랜잭션**: 데이터 일관성이 필요한 작업은 트랜잭션 사용
 
-- JWT 설정, 이메일 설정, 서버 설정 등
-- 설정 파일 위치: `packages/config/server.config.ts`
+### 설정 관리 규칙
 
-### 데이터베이스 설정
+1. **환경변수**: DATABASE_URL만 환경변수로 관리
+2. **중앙화된 설정**: 나머지 설정은 src/conf/conf.ts에서 관리
+3. **타입 안전성**: 모든 설정은 registerAs를 통한 타입 안전한 설정 객체
+4. **기본값**: 모든 설정은 적절한 기본값 제공
 
-```bash
-# Prisma 클라이언트 생성
-pnpm prisma generate
+### 패키지 규칙
 
-# 마이그레이션 실행
-pnpm prisma migrate dev
+1. **@repo/dto**: 모든 DTO는 @repo/dto 패키지에서 관리
+2. **@repo/drizzle**: 데이터베이스 스키마는 @repo/drizzle 패키지에서 관리
+3. **@repo/message**: 메시지와 응답 코드는 @repo/message 패키지에서 관리
+4. **내부 임포트**: 프로젝트 내부 모듈은 @/ 경로 별칭 사용
 
-# (선택) 시드 데이터 추가
-pnpm prisma db seed
+### 보안 규칙
 
-# (선택) Prisma Studio 실행
-pnpm prisma studio
-```
+1. **JWT 토큰**: HttpOnly 쿠키로 저장하여 XSS 방지
+2. **비밀번호**: bcrypt를 통한 해시 처리
+3. **요청 제한**: Throttler를 통한 API 호출 제한
+4. **CORS**: 적절한 CORS 설정으로 CSRF 방지
 
-### 개발 서버 실행
+### 개발 규칙
 
-```bash
-# 개발 모드
-pnpm dev
+1. **ESLint**: 코드 품질을 위한 ESLint 규칙 준수
+2. **TypeScript**: strict 모드 활성화
+3. **에러 처리**: 모든 비동기 작업은 try-catch로 에러 처리
+4. **로깅**: HttpLoggingInterceptor를 통한 요청/응답 로깅
 
-# 또는 터보레포를 통한 실행
-pnpm dev --filter=api
-
-# 프로덕션 모드
-pnpm start:prod
-```
-
-서버는 `http://localhost:8000`에서 실행됩니다.
-
-## API 엔드포인트
-
-### 인증 (Auth)
-
-| 메서드 | 엔드포인트              | 설명             | 인증 필요 |
-| ------ | ----------------------- | ---------------- | --------- |
-| POST   | `/auth/signup`          | 회원가입         | ❌        |
-| POST   | `/auth/signin`          | 로그인           | ❌        |
-| POST   | `/auth/signout`         | 로그아웃         | ✅        |
-| POST   | `/auth/forgot-password` | 비밀번호 찾기    | ❌        |
-| POST   | `/auth/reset-password`  | 비밀번호 재설정  | ❌        |
-| POST   | `/auth/change-password` | 비밀번호 변경    | ✅        |
-| GET    | `/auth/me`              | 현재 사용자 정보 | ✅        |
-| POST   | `/auth/refresh`         | 토큰 갱신        | ❌        |
-
-### 사용자 (Users)
-
-| 메서드 | 엔드포인트              | 설명                 | 인증 필요 |
-| ------ | ----------------------- | -------------------- | --------- |
-| GET    | `/users`                | 전체 사용자 목록     | ❌        |
-| GET    | `/users/:userId`        | 특정 사용자 정보     | ✅        |
-| GET    | `/users/email/:emlAddr` | 이메일로 사용자 조회 | ✅        |
-
-## 주요 기능 설명
-
-### 인증 시스템
-
-- **JWT 토큰**: Access Token (1시간) + Refresh Token (30일)
-- **쿠키 저장**: HttpOnly 쿠키로 안전한 토큰 저장
-- **자동 갱신**: Refresh Token을 통한 자동 토큰 갱신
-- **보안**: CSRF 방지, XSS 방지
-
-### 사용자 관리
-
-- **회원가입**: 이메일, 사용자명, 비밀번호 검증
-- **로그인**: 이메일/비밀번호 인증
-- **프로필**: 사용자 정보 조회 및 수정
-- **권한**: USER/ADMIN 역할 기반 권한 관리
-
-### 이메일 서비스
-
-- **비밀번호 재설정**: 이메일을 통한 비밀번호 재설정
-- **템플릿**: HTML 이메일 템플릿 지원
-- **보안**: 토큰 기반 재설정 링크
-
-### 보안 기능
-
-- **요청 제한**: IP별 API 호출 제한
-- **CORS**: Cross-Origin 요청 제어
-- **Helmet**: 보안 헤더 설정
-- **입력 검증**: Zod 기반 데이터 검증
-
-## 개발 가이드
-
-### 새로운 모듈 추가
-
-```typescript
-// src/posts/posts.module.ts
-import { Module } from '@nestjs/common';
-import { PostsController } from './posts.controller';
-import { PostsService } from './posts.service';
-
-@Module({
-  controllers: [PostsController],
-  providers: [PostsService],
-  exports: [PostsService],
-})
-export class PostsModule {}
-```
-
-### 새로운 컨트롤러 추가
-
-```typescript
-// src/posts/posts.controller.ts
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
-import { PostsService } from './posts.service';
-import { CreatePostDto } from '@repo/dto/DTO';
-
-@ApiTags('posts')
-@Controller('posts')
-export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
-
-  @ApiOperation({ summary: '게시글 생성' })
-  @ApiResponse({ status: 201, description: '게시글 생성 성공' })
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  create(@Body() createPostDto: CreatePostDto) {
-    return this.postsService.create(createPostDto);
-  }
-}
-```
-
-### 새로운 서비스 추가
-
-```typescript
-// src/posts/posts.service.ts
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreatePostDto } from '@repo/dto/DTO';
-
-@Injectable()
-export class PostsService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async create(createPostDto: CreatePostDto) {
-    return this.prisma.post.create({
-      data: createPostDto,
-    });
-  }
-}
-```
-
-## 데이터베이스 관리
-
-### 마이그레이션
-
-```bash
-# 새로운 마이그레이션 생성
-pnpm prisma migrate dev --name add_posts_table
-
-# 프로덕션 마이그레이션
-pnpm prisma migrate deploy
-```
-
-### 스키마 수정
-
-```prisma
-// prisma/schema.prisma
-model Post {
-  postId    String   @id @default(uuid()) @map("post_id")
-  title     String   @map("title")
-  content   String   @map("content")
-  userId    String   @map("user_id")
-  user      UserInfo @relation(fields: [userId], references: [userId])
-
-  // 메타데이터
-  crtDt     DateTime @default(now()) @map("crt_dt")
-  updtDt    DateTime @updatedAt @map("updt_dt")
-  delDt     DateTime? @map("del_dt")
-
-  @@map("post")
-}
-```
-
-## 배포
-
-### 빌드
-
-```bash
-# 프로덕션 빌드
-pnpm build
-
-# 또는 터보레포를 통한 빌드
-pnpm build --filter=api
-```
-
-### 서버 실행
-
-```bash
-# 프로덕션 모드
-pnpm start:prod
-```
-
-### Docker 배포
-
-```dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY dist ./dist
-
-EXPOSE 8000
-
-CMD ["node", "dist/main"]
-```
-
-## API 문서
-
-개발 서버 실행 후 `http://localhost:8000/api`에서 Swagger 문서를 확인할 수 있습니다.
-
-## 요약
-
-이 NestJS API 서버는 Nest-Next-Mono Template의 백엔드 서버로, 현대적인 백엔드 개발에 필요한 모든 핵심 기능을 제공합니다. 타입 안전성, 보안, 성능을 고려한 설계로 확장 가능하고 유지보수하기 쉬운 API를 구축할 수 있습니다.
+이러한 규칙들은 프로젝트의 일관성, 유지보수성, 확장성을 보장하며, 팀 개발 시 코드 품질을 유지하는 기준이 됩니다.

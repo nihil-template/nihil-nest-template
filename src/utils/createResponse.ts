@@ -1,4 +1,5 @@
-import { RESPONSE_CODE, MESSAGE_CODE } from '@repo/message';
+import { MESSAGE_CODE } from '@/code/message.code';
+import { RESPONSE_CODE } from '@/code/response.code';
 
 export function createResponse<TData = any>(
   code: keyof typeof RESPONSE_CODE,

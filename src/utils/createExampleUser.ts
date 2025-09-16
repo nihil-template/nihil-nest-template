@@ -1,4 +1,4 @@
-import type { UserInfoType } from '@repo/drizzle';
+import { UserInfoType } from '@/drizzle/schemas/user.schema';
 
 /**
  * @description 사용자 예시 데이터.

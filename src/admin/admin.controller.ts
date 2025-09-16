@@ -1,11 +1,13 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, Req, Request } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { MESSAGE_CODE, RESPONSE_CODE } from '@repo/message';
-import { CreateAdminDto, ResponseDto } from '@repo/dto';
 
 import { AdminAuthGuard } from '@/auth/admin-auth.guard';
-import { AdminService } from './admin.service';
 import { createExampleUser } from '@/utils/createExampleUser';
+import { MESSAGE_CODE } from '@/code/message.code';
+import { RESPONSE_CODE } from '@/code/response.code';
+import { CreateAdminDto } from '@/dto/admin.dto';
+import { ResponseDto } from '@/dto/response.dto';
+import { AdminService } from './admin.service';
 
 @ApiTags('admin')
 @Controller('admin')

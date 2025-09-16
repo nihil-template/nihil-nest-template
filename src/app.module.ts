@@ -13,7 +13,7 @@ import config from './conf/conf';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [ config, ],
+      load: config,
       isGlobal: true,
     }),
     DrizzleModule,

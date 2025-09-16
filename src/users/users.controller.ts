@@ -7,29 +7,31 @@ import {
   HttpStatus,
   Param,
   Put,
+  Query,
   Req,
   UseGuards,
-  UseInterceptors,
-  Query
+  UseInterceptors
 } from '@nestjs/common';
-import { FastifyRequest } from 'fastify';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
   ApiOkResponse,
-  ApiQuery
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags
 } from '@nestjs/swagger';
-import { UpdateUserDto, type ListDto, type ResponseDto, type UserInfoDto } from '@repo/dto';
+import { FastifyRequest } from 'fastify';
 
-import { UsersService } from './users.service';
 import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
 import { JwtPayload } from '@/auth/jwt.strategy';
-import { MESSAGE_CODE, RESPONSE_CODE } from '@repo/message';
-import { createExampleUser } from '@/utils/createExampleUser';
 import { createError, createResponse } from '@/utils';
+import { createExampleUser } from '@/utils/createExampleUser';
+import { MESSAGE_CODE } from '@/code/message.code';
+import { RESPONSE_CODE } from '@/code/response.code';
+import { ListDto, ResponseDto } from '@/dto/response.dto';
+import { UpdateUserDto, UserInfoDto } from '@/dto/user.dto';
 import { cloneDeep } from 'lodash';
+import { UsersService } from './users.service';
 
 @ApiTags('users')
 @Controller('users')

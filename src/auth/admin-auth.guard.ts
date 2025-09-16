@@ -1,17 +1,23 @@
+import { userRoleSchema } from '@/drizzle/schemas/user.schema';
+import { createError } from '@/utils';
 import {
-  Injectable,
-  ExecutionContext
+  ExecutionContext,
+  Injectable
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { userRoleSchema } from '@repo/drizzle';
-import { createError } from '@/utils';
 
+import { ResponseDto } from '@/dto/response.dto';
 import { JwtPayload } from './jwt.strategy';
+
+interface RequestWithUser {
+  user?: JwtPayload;
+  errorResponse?: ResponseDto<null>;
+}
 
 @Injectable()
 export class AdminAuthGuard extends AuthGuard('jwt') {
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
 
     try {
       const result = await super.canActivate(context);
@@ -21,9 +27,9 @@ export class AdminAuthGuard extends AuthGuard('jwt') {
         return true; // Guard를 통과시키되 에러 응답을 설정
       }
 
-      const user = request.user as JwtPayload;
+      const user = request.user;
 
-      if (user.userRole !== userRoleSchema.enum.ADMIN) {
+      if (!user || user.userRole !== userRoleSchema.enum.ADMIN) {
         request.errorResponse = createError('FORBIDDEN', 'ADMIN_ONLY');
         return true; // Guard를 통과시키되 에러 응답을 설정
       }

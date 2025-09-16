@@ -1,10 +1,11 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { DRIZZLE } from '../drizzle/drizzle.module';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { schemas } from '@/drizzle/schemas';
+import { UserInfoType } from '@/drizzle/schemas/user.schema';
+import { CreateAdminDto } from '@/dto/admin.dto';
+import { CreateUserDto } from '@/dto/auth.dto';
+import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
-import { type UserInfoType } from '@repo/drizzle';
-import { CreateAdminDto, CreateUserDto } from '@repo/dto';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { DRIZZLE } from '../drizzle/drizzle.module';
 
 @Injectable()
 export class UserRepository {
@@ -230,8 +231,8 @@ export class UserRepository {
     await this.db.execute(
       sql`
         UPDATE
-          USER_INFO 
-        SET 
+          USER_INFO
+        SET
             RESH_TOKEN = ${reshToken}
           , LAST_LGN_DT = NOW()
           , UPDT_DT = NOW()
@@ -250,8 +251,8 @@ export class UserRepository {
     await this.db.execute(
       sql`
         UPDATE
-          USER_INFO 
-        SET 
+          USER_INFO
+        SET
             RESH_TOKEN = ${reshToken}
           , UPDT_DT = NOW()
         WHERE
@@ -268,8 +269,8 @@ export class UserRepository {
     await this.db.execute(
       sql`
         UPDATE
-          USER_INFO 
-        SET 
+          USER_INFO
+        SET
             RESH_TOKEN = NULL
           , UPDT_DT = NOW()
         WHERE

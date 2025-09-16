@@ -1,9 +1,9 @@
+import { UserRoleType } from '@/drizzle/schemas/user.schema';
 import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { FastifyRequest } from 'fastify';
 import { ConfigService } from '@nestjs/config';
-import { UserRoleType } from '@repo/drizzle';
+import { PassportStrategy } from '@nestjs/passport';
+import { FastifyRequest } from 'fastify';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 
 export interface JwtPayload {
   userNo: number;

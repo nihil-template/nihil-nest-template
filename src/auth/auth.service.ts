@@ -1,30 +1,22 @@
-import { MailerService } from '@nestjs-modules/mailer';
 import { UsersService } from '@/users/users.service';
+import { MailerService } from '@nestjs-modules/mailer';
 import {
   Inject,
   Injectable
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import {
-  ChangePasswordDto,
-  ForgotPasswordDto,
-  ResetPasswordDto,
-  SignInDto,
-  CreateUserDto,
-  WithdrawDto,
-  ResponseDto,
-  UserInfoDto
-} from '@repo/dto';
+import { JwtService } from '@nestjs/jwt';
 
-import bcrypt from 'bcrypt';
-import { messages } from '@repo/message';
-import { cloneDeep } from 'lodash';
-import { schemas } from '@/drizzle/schemas';
 import { DRIZZLE } from '@/drizzle/drizzle.module';
-import type { UserRoleType } from '@repo/drizzle';
-import { createResponse, createError } from '@/utils';
-import { UserRepository } from '../repositories/user.repository';
+import { schemas } from '@/drizzle/schemas';
+import { UserRoleType } from '@/drizzle/schemas/user.schema';
+import { UserRepository } from '@/repositories/user.repository';
+import { createError, createResponse } from '@/utils';
+import { ChangePasswordDto, CreateUserDto, ForgotPasswordDto, ResetPasswordDto, SignInDto, WithdrawDto } from '@/dto/auth.dto';
+import { ResponseDto } from '@/dto/response.dto';
+import { UserInfoDto } from '@/dto/user.dto';
+import bcrypt from 'bcrypt';
+import { cloneDeep } from 'lodash';
 
 // JWT Payload 타입 정의
 interface JwtPayload {
@@ -208,7 +200,7 @@ export class AuthService {
       const userToReturn = cloneDeep(user);
       userToReturn.encptPswd = null;
       userToReturn.reshToken = null;
-      return { user: userToReturn as UserInfoDto, acsToken: newAcsToken, reshToken: newReshToken, accessTokenExpiresAt, };
+      return { user: userToReturn, acsToken: newAcsToken, reshToken: newReshToken, accessTokenExpiresAt, };
     }
     catch {
       return createError('UNAUTHORIZED', 'INVALID_REFRESH_TOKEN');
@@ -362,19 +354,26 @@ export class AuthService {
       expiresIn: '5m',
     });
 
-    const appBaseUrl = /^https?:\/\//.test(this.configService.get('app.url'))
-      ? this.configService.get('app.url')
+    const appBaseUrl = this.configService.get<string>('app.url');
+    const validatedUrl = /^https?:\/\//.test(appBaseUrl)
+      ? appBaseUrl
       : 'http://localhost:3000';
 
-    const resetLink = `${appBaseUrl.replace(/\/$/, '')}/auth/reset-password?token=${resetToken}`;
+    const resetLink = `${validatedUrl.replace(/\/$/, '')}/auth/reset-password?token=${resetToken}`;
 
     try {
       await this.mailerService.sendMail({
         to: user.emlAddr,
         from: `"No Reply" <${this.configService.get('nodemailer.auth.user')}>`,
-        subject: messages.auth.resetPasswordEmailSubject(this.configService.get('app.name')),
-        text: messages.auth.resetPasswordEmailText(resetLink),
-        html: messages.auth.resetPasswordEmailHtml(this.configService.get('app.name'), resetLink),
+        subject: `[${this.configService.get('app.name')}] 비밀번호 재설정`,
+        text: `비밀번호를 재설정하려면 다음 링크를 클릭하세요: ${resetLink}`,
+        html: `
+          <h2>비밀번호 재설정</h2>
+          <p>비밀번호를 재설정하려면 아래 버튼을 클릭하세요:</p>
+          <a href="${resetLink}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">비밀번호 재설정</a>
+          <p>링크가 작동하지 않으면 다음 URL을 복사하여 브라우저에 붙여넣으세요:</p>
+          <p>${resetLink}</p>
+        `,
       });
     }
     catch (error: unknown) {

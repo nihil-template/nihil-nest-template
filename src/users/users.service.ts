@@ -1,8 +1,9 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { UpdateUserDto, type ListDto, type UserInfoDto } from '@repo/dto';
 import { DRIZZLE } from '@/drizzle/drizzle.module';
-import { searchUserSchema } from '@repo/drizzle';
+import { searchUserSchema } from '@/drizzle/schemas/user.schema';
 import { UserRepository } from '@/repositories/user.repository';
+import { ListDto } from '@/dto/response.dto';
+import { UpdateUserDto, UserInfoDto } from '@/dto/user.dto';
+import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
