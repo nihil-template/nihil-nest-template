@@ -62,7 +62,7 @@
     "@swc/core": "^1.13.5",
     "@types/express": "^5.0.3",
     "@types/luxon": "^3.7.1",
-    "@types/node": "^24.4.0",
+    "@types/node": "^24.5.0",
     "@types/nodemailer": "^7.0.1",
     "@types/pg": "^8.15.5",
     "class-transformer": "^0.5.1",
@@ -75,6 +75,6 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.43.0"
+    "typescript-eslint": "^8.44.0"
   }
 }
