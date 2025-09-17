@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { AdminAuthGuard } from '@/auth/admin-auth.guard';
+import { AdminAuthGuard } from '@/endpoints/auth/admin-auth.guard';
 import { createExampleUser } from '@/utils/createExampleUser';
 import { MESSAGE_CODE } from '@/code/message.code';
 import { RESPONSE_CODE } from '@/code/response.code';

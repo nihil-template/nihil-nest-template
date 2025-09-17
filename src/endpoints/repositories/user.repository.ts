@@ -1,11 +1,11 @@
-import { schemas } from '@/drizzle/schemas';
-import { UserInfoType } from '@/drizzle/schemas/user.schema';
+import { schemas } from '@/endpoints/drizzle/schemas';
+import { UserInfoType } from '@/endpoints/drizzle/schemas/user.schema';
 import { CreateAdminDto } from '@/dto/admin.dto';
 import { CreateUserDto } from '@/dto/auth.dto';
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { DRIZZLE } from '../drizzle/drizzle.module';
+import { DRIZZLE } from '@/endpoints/drizzle/drizzle.module';
 
 @Injectable()
 export class UserRepository {

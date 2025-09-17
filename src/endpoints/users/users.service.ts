@@ -1,6 +1,6 @@
-import { DRIZZLE } from '@/drizzle/drizzle.module';
-import { searchUserSchema } from '@/drizzle/schemas/user.schema';
-import { UserRepository } from '@/repositories/user.repository';
+import { DRIZZLE } from '@/endpoints/drizzle/drizzle.module';
+import { searchUserSchema } from '@/endpoints/drizzle/schemas/user.schema';
+import { UserRepository } from '@/endpoints/repositories/user.repository';
 import { ListDto } from '@/dto/response.dto';
 import { UpdateUserDto, UserInfoDto } from '@/dto/user.dto';
 import { Inject, Injectable } from '@nestjs/common';

@@ -4,10 +4,10 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
-import { AuthModule } from '@/auth/auth.module';
-import { UsersModule } from '@/users/users.module';
-import { AdminModule } from '@/admin/admin.module';
-import { DrizzleModule } from '@/drizzle/drizzle.module';
+import { AuthModule } from '@/endpoints/auth/auth.module';
+import { UsersModule } from '@/endpoints/users/users.module';
+import { AdminModule } from '@/endpoints/admin/admin.module';
+import { DrizzleModule } from '@/endpoints/drizzle/drizzle.module';
 import config from './conf/conf';
 
 @Module({

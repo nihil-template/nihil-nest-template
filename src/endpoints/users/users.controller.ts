@@ -22,8 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { FastifyRequest } from 'fastify';
 
-import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
-import { JwtPayload } from '@/auth/jwt.strategy';
+import { JwtAuthGuard } from '@/endpoints/auth/jwt-auth.guard';
+import { JwtPayload } from '@/endpoints/auth/jwt.strategy';
 import { createError, createResponse } from '@/utils';
 import { createExampleUser } from '@/utils/createExampleUser';
 import { MESSAGE_CODE } from '@/code/message.code';

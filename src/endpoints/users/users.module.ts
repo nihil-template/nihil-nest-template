@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { DrizzleModule } from '@/drizzle/drizzle.module';
-import { UserRepository } from '@/repositories/user.repository';
+import { DrizzleModule } from '@/endpoints/drizzle/drizzle.module';
+import { UserRepository } from '@/endpoints/repositories/user.repository';
 
 @Module({
   imports: [ DrizzleModule, ],

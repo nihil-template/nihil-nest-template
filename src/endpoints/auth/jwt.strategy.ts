@@ -1,4 +1,4 @@
-import { UserRoleType } from '@/drizzle/schemas/user.schema';
+import { UserRoleType } from '@/endpoints/drizzle/schemas/user.schema';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';

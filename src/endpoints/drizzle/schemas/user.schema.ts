@@ -1,4 +1,4 @@
-import { userRole, yn } from '@/drizzle/enums';
+import { userRole, yn } from '@/endpoints/drizzle/enums';
 import { z } from 'zod';
 
 // Drizzle enum을 Zod 스키마로 변환

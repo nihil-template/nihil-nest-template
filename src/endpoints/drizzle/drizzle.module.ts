@@ -1,4 +1,4 @@
-import { schemas } from '@/drizzle/schemas';
+import { schemas } from '@/endpoints/drizzle/schemas';
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/node-postgres';

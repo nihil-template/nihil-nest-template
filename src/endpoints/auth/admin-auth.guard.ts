@@ -1,4 +1,4 @@
-import { userRoleSchema } from '@/drizzle/schemas/user.schema';
+import { userRoleSchema } from '@/endpoints/drizzle/schemas/user.schema';
 import { createError } from '@/utils';
 import {
   ExecutionContext,

@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 import {
-  userInfoSchema,
-  updateUserSchema,
   searchUserSchema,
+  updateUserSchema,
+  userInfoSchema,
   type UserRoleType,
   type YnType
-} from '@/drizzle/schemas/user.schema';
+} from '@/endpoints/drizzle/schemas/user.schema';
 import { Exclude } from 'class-transformer';
 import { createZodDto } from 'nestjs-zod';
 

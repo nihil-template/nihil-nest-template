@@ -1,4 +1,4 @@
-import { UsersService } from '@/users/users.service';
+import { UsersService } from '@/endpoints/users/users.service';
 import { MailerService } from '@nestjs-modules/mailer';
 import {
   Inject,
@@ -7,10 +7,10 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
-import { DRIZZLE } from '@/drizzle/drizzle.module';
-import { schemas } from '@/drizzle/schemas';
-import { UserRoleType } from '@/drizzle/schemas/user.schema';
-import { UserRepository } from '@/repositories/user.repository';
+import { DRIZZLE } from '@/endpoints/drizzle/drizzle.module';
+import { schemas } from '@/endpoints/drizzle/schemas';
+import { UserRoleType } from '@/endpoints/drizzle/schemas/user.schema';
+import { UserRepository } from '@/endpoints/repositories/user.repository';
 import { createError, createResponse } from '@/utils';
 import { ChangePasswordDto, CreateUserDto, ForgotPasswordDto, ResetPasswordDto, SignInDto, WithdrawDto } from '@/dto/auth.dto';
 import { ResponseDto } from '@/dto/response.dto';
