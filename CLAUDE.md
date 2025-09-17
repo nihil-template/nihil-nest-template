@@ -39,8 +39,9 @@ This is a NestJS API server built with TypeScript, using Fastify as the HTTP ada
 
 3. **Configuration System** (`src/conf/conf.ts`):
    - Type-safe configuration using `registerAs`
-   - Environment variables with sensible defaults
+   - YAML-based configuration (`config.yaml`)
    - Separate configs for server, JWT, database, mailer, etc.
+   - Configuration types defined in `src/conf/config.types.ts`
 
 ### Database Architecture
 

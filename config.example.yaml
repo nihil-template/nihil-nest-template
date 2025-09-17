@@ -1,0 +1,53 @@
+# NestJS 서버 환경 변수 설정 예시
+
+# 서버 기본 설정
+server:
+  port: 8000
+  host: 'localhost'
+
+# Swagger API 문서 설정
+swagger:
+  docsName: 'Nest-Next-Mono Template API 문서'
+  docsDescription: 'Nest-Next-Mono Template API 문서'
+  docsVersion: '1.0.0'
+  path: 'swagger/docs'
+
+# JWT 토큰 설정 (실제 운영 환경에서는 안전한 키를 사용하세요)
+jwt:
+  access:
+    secret: 'your-access-secret-key-here'
+    expiresIn: '1h'
+  refresh:
+    secret: 'your-refresh-secret-key-here'
+    expiresIn: '30d'
+
+# Nodemailer 이메일 설정
+nodemailer:
+  host: 'smtp.naver.com'
+  port: 587
+  secure: false
+  auth:
+    user: 'your-email@example.com'
+    pass: 'your-app-password'
+
+# 초기 관리자 계정 설정
+initialAdmin:
+  email: 'admin@example.com'
+  username: 'admin'
+  password: 'changeme123!'
+
+# 데이터베이스 설정
+database:
+  url: 'postgresql://username:password@localhost:5432/database_name'
+  host: 'localhost'
+  port: 5432
+  user: 'postgres'
+  password: 'your-password'
+  name: 'your-database'
+
+# 공통 앱 설정
+app:
+  name: 'Nest-Next-Mono Template'
+  description: 'NestJS와 Next.js를 사용한 모노레포 풀스택 웹 애플리케이션 템플릿'
+  version: '1.0.0'
+  url: '설정하세요.'
