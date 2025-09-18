@@ -1,14 +1,12 @@
-import { DRIZZLE } from '@/endpoints/drizzle/drizzle.module';
-import { searchUserSchema } from '@/endpoints/drizzle/schemas/user.schema';
-import { UserRepository } from '@/endpoints/repositories/user.repository';
 import { ListDto } from '@/dto/response.dto';
 import { UpdateUserDto, UserInfoDto } from '@/dto/user.dto';
-import { Inject, Injectable } from '@nestjs/common';
+import { searchUserSchema } from '@/endpoints/drizzle/schemas/user.schema';
+import { UserRepository } from '@/endpoints/repositories/user.repository';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @Inject(DRIZZLE)
     private readonly userRepository: UserRepository
   ) { }
 
@@ -60,7 +58,7 @@ export class UsersService {
 
   async getUserById(userNo: number): Promise<UserInfoDto | null> {
     try {
-      const userData = await this.userRepository.findById(userNo);
+      const userData = await this.userRepository.findByUserNo(userNo);
       return userData;
     }
     catch {
@@ -78,22 +76,34 @@ export class UsersService {
     }
   }
 
-  async updateProfile(userNo: number, updateProfileData: UpdateUserDto): Promise<UserInfoDto | null> {
+  async updateProfile(userNo: number, updateProfileData: UpdateUserDto): Promise<{
+    success: boolean;
+    data?: UserInfoDto;
+    errorType?: 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL_SERVER_ERROR';
+  }> {
     const { userNm, proflImg, userBiogp, } = updateProfileData;
 
     try {
       // 현재 사용자 정보 조회
-      const currentUser = await this.userRepository.findById(userNo);
+      const currentUser = await this.userRepository.findByUserNo(userNo);
+
       if (!currentUser) {
-        return null;
+        return { success: false, errorType: 'NOT_FOUND', };
       }
 
       // 사용자명 변경 시 중복 확인
-      if (userNm && userNm !== currentUser.userNm) {
-        const isExists = await this.userRepository.isUserNameExists(userNm, userNo);
-        if (isExists) {
-          return null;
+      if (userNm) {
+        // 1. 이름으로 사용자 찾기
+        const existingUser = await this.userRepository.findByUserName(userNm);
+
+        if (existingUser) {
+          // 2. 찾은 사용자의 userNo와 현재 userNo 비교
+          if (existingUser.userNo !== userNo) {
+            return { success: false, errorType: 'CONFLICT', };
+          }
+          // 3. 같은 userNo면 이름 변경 안한 것 (패스)
         }
+        // 4. 찾은 사용자가 없으면 새 이름 (사용 가능)
       }
 
       // 프로필 업데이트
@@ -103,10 +113,10 @@ export class UsersService {
         userBiogp,
       });
 
-      return updatedUser;
+      return { success: true, data: updatedUser, };
     }
     catch {
-      return null;
+      return { success: false, errorType: 'INTERNAL_SERVER_ERROR', };
     }
   }
 }

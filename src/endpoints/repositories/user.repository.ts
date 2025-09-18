@@ -1,11 +1,11 @@
-import { schemas } from '@/endpoints/drizzle/schemas';
-import { UserInfoType } from '@/endpoints/drizzle/schemas/user.schema';
 import { CreateAdminDto } from '@/dto/admin.dto';
 import { CreateUserDto } from '@/dto/auth.dto';
+import { DRIZZLE } from '@/endpoints/drizzle/drizzle.module';
+import { schemas } from '@/endpoints/drizzle/schemas';
+import { UserInfoType } from '@/endpoints/drizzle/schemas/user.schema';
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { DRIZZLE } from '@/endpoints/drizzle/drizzle.module';
 
 @Injectable()
 export class UserRepository {
@@ -13,42 +13,6 @@ export class UserRepository {
     @Inject(DRIZZLE)
     private readonly db: NodePgDatabase<typeof schemas>
   ) {}
-
-  /**
-   * 사용자 번호로 사용자 정보 조회
-   * @param userNo 사용자 번호
-   * @returns 사용자 정보 또는 null
-   */
-  async findById(userNo: number): Promise<UserInfoType | null> {
-    const result = await this.db.execute<UserInfoType>(
-      sql`
-        SELECT
-            USER_NO AS "userNo"
-          , EML_ADDR AS "emlAddr"
-          , USER_NM AS "userNm"
-          , USER_ROLE AS "userRole"
-          , PROFL_IMG AS "proflImg"
-          , USER_BIOGP AS "userBiogp"
-          , ENCPT_PSWD AS "encptPswd"
-          , RESH_TOKEN AS "reshToken"
-          , USE_YN AS "useYn"
-          , DEL_YN AS "delYn"
-          , TO_CHAR(LAST_LGN_DT, 'YYYY-MM-DD HH24:MI:SS') AS "lastLgnDt"
-          , CRT_NO AS "crtNo"
-          , TO_CHAR(CRT_DT, 'YYYY-MM-DD HH24:MI:SS') AS "crtDt"
-          , UPDT_NO AS "updtNo"
-          , TO_CHAR(UPDT_DT, 'YYYY-MM-DD HH24:MI:SS') AS "updtDt"
-          , DEL_NO AS "delNo"
-          , TO_CHAR(DEL_DT, 'YYYY-MM-DD HH24:MI:SS') AS "delDt"
-        FROM
-          USER_INFO
-        WHERE
-          USER_NO = ${userNo}
-      `
-    );
-
-    return result.rows[0] || null;
-  }
 
   /**
    * 사용자 번호로 사용자 정보 조회 (findById와 동일)
@@ -472,6 +436,45 @@ export class UserRepository {
   }
 
   /**
+   * 사용자명으로 사용자 정보 조회
+   * @param userNm 사용자명
+   * @returns 사용자 정보 또는 null
+   */
+  async findByUserName(userNm: string): Promise<UserInfoType | null> {
+    const result = await this.db.execute<UserInfoType>(
+      sql`
+        SELECT
+            USER_NO AS "userNo"
+          , EML_ADDR AS "emlAddr"
+          , USER_NM AS "userNm"
+          , USER_ROLE AS "userRole"
+          , PROFL_IMG AS "proflImg"
+          , USER_BIOGP AS "userBiogp"
+          , ENCPT_PSWD AS "encptPswd"
+          , RESH_TOKEN AS "reshToken"
+          , USE_YN AS "useYn"
+          , DEL_YN AS "delYn"
+          , TO_CHAR(LAST_LGN_DT, 'YYYY-MM-DD HH24:MI:SS') AS "lastLgnDt"
+          , CRT_NO AS "crtNo"
+          , TO_CHAR(CRT_DT, 'YYYY-MM-DD HH24:MI:SS') AS "crtDt"
+          , UPDT_NO AS "updtNo"
+          , TO_CHAR(UPDT_DT, 'YYYY-MM-DD HH24:MI:SS') AS "updtDt"
+          , DEL_NO AS "delNo"
+          , TO_CHAR(DEL_DT, 'YYYY-MM-DD HH24:MI:SS') AS "delDt"
+        FROM
+          USER_INFO
+        WHERE
+          USER_NM = ${userNm}
+        AND
+          DEL_YN = 'N'
+        LIMIT 1
+      `
+    );
+
+    return result.rows[0] || null;
+  }
+
+  /**
    * 사용자 프로필 수정
    * @param userNo 사용자 번호
    * @param updateData 수정할 데이터
@@ -482,13 +485,18 @@ export class UserRepository {
     proflImg?: string;
     userBiogp?: string;
   }): Promise<UserInfoType> {
+    // undefined 값을 null로 변환하여 SQL에서 처리할 수 있도록 함
+    const userNm = updateData.userNm ?? null;
+    const proflImg = updateData.proflImg ?? null;
+    const userBiogp = updateData.userBiogp ?? null;
+
     const result = await this.db.execute<UserInfoType>(
       sql`
         UPDATE USER_INFO
         SET
-            USER_NM = COALESCE(${updateData.userNm}, USER_NM)
-          , PROFL_IMG = COALESCE(${updateData.proflImg}, PROFL_IMG)
-          , USER_BIOGP = COALESCE(${updateData.userBiogp}, USER_BIOGP)
+            USER_NM = COALESCE(${userNm}, USER_NM)
+          , PROFL_IMG = COALESCE(${proflImg}, PROFL_IMG)
+          , USER_BIOGP = COALESCE(${userBiogp}, USER_BIOGP)
           , UPDT_DT = NOW()
         WHERE
           USER_NO = ${userNo}

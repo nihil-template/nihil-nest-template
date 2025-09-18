@@ -22,14 +22,14 @@ import {
 } from '@nestjs/swagger';
 import { FastifyRequest } from 'fastify';
 
-import { JwtAuthGuard } from '@/endpoints/auth/jwt-auth.guard';
-import { JwtPayload } from '@/endpoints/auth/jwt.strategy';
-import { createError, createResponse } from '@/utils';
-import { createExampleUser } from '@/utils/createExampleUser';
 import { MESSAGE_CODE } from '@/code/message.code';
 import { RESPONSE_CODE } from '@/code/response.code';
 import { ListDto, ResponseDto } from '@/dto/response.dto';
 import { UpdateUserDto, UserInfoDto } from '@/dto/user.dto';
+import { JwtAuthGuard } from '@/endpoints/auth/jwt-auth.guard';
+import { JwtPayload } from '@/endpoints/auth/jwt.strategy';
+import { createError, createResponse } from '@/utils';
+import { createExampleUser } from '@/utils/createExampleUser';
 import { cloneDeep } from 'lodash';
 import { UsersService } from './users.service';
 
@@ -341,13 +341,20 @@ export class UsersController {
     const authUser = req.user;
     const result = await this.usersService.updateProfile(authUser.userNo, updateProfileData);
 
-    const userToReturn = cloneDeep(result);
+    if (!result.success) {
+      switch (result.errorType) {
+      case 'NOT_FOUND':
+        return createError('NOT_FOUND', 'USER_NOT_FOUND');
+      case 'CONFLICT':
+        return createError('CONFLICT', 'USER_NAME_EXISTS');
+      default:
+        return createError('INTERNAL_SERVER_ERROR', 'PROFILE_UPDATE_ERROR');
+      }
+    }
+
+    const userToReturn = cloneDeep(result.data);
     userToReturn.encptPswd = undefined;
     userToReturn.reshToken = undefined;
-
-    if (!result) {
-      return createError('NOT_FOUND', 'USER_NOT_FOUND');
-    }
 
     return createResponse('SUCCESS', 'PROFILE_UPDATE_SUCCESS', userToReturn);
   }

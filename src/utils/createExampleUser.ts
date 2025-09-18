@@ -1,4 +1,4 @@
-import { UserInfoType } from '@/drizzle/schemas/user.schema';
+import { UserInfoType } from '@/endpoints/drizzle/schemas/user.schema';
 
 /**
  * @description 사용자 예시 데이터.
