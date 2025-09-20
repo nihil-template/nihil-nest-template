@@ -29,12 +29,22 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: JwtPayload): JwtPayload {
-    return {
-      userNo: payload.userNo,
-      emlAddr: payload.emlAddr,
-      userNm: payload.userNm,
-      userRole: payload.userRole,
-    };
+  validate(payload: JwtPayload): JwtPayload | null {
+    try {
+      // JWT 페이로드 검증
+      if (!payload || !payload.userNo) {
+        return null; // 유효하지 않은 페이로드
+      }
+
+      return {
+        userNo: payload.userNo,
+        emlAddr: payload.emlAddr,
+        userNm: payload.userNm,
+        userRole: payload.userRole,
+      };
+    }
+    catch {
+      return null; // 검증 실패 시 null 반환
+    }
   }
 }

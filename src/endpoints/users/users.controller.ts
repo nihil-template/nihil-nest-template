@@ -335,10 +335,14 @@ export class UsersController {
   @Put('profile')
   @HttpCode(HttpStatus.OK)
   async updateProfile(
-    @Req() req: FastifyRequest & { user: JwtPayload },
+    @Req() req: FastifyRequest & { user: JwtPayload | null },
     @Body() updateProfileData: UpdateUserDto
   ): Promise<ResponseDto<UserInfoDto>> {
     const authUser = req.user;
+
+    if (!authUser) {
+      return createError('UNAUTHORIZED', 'UNAUTHORIZED');
+    }
     const result = await this.usersService.updateProfile(authUser.userNo, updateProfileData);
 
     if (!result.success) {

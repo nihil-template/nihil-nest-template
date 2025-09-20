@@ -1,13 +1,13 @@
+import { MailerModule } from '@nestjs-modules/mailer';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MailerModule } from '@nestjs-modules/mailer';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
-import { AuthModule } from '@/endpoints/auth/auth.module';
-import { UsersModule } from '@/endpoints/users/users.module';
 import { AdminModule } from '@/endpoints/admin/admin.module';
+import { AuthModule } from '@/endpoints/auth/auth.module';
 import { DrizzleModule } from '@/endpoints/drizzle/drizzle.module';
+import { UsersModule } from '@/endpoints/users/users.module';
 import config from './conf/conf';
 
 @Module({

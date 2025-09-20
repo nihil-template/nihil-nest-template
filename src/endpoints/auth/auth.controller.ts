@@ -1,11 +1,11 @@
-import { createError, createResponse } from '@/utils';
-import { createExampleUser } from '@/utils/createExampleUser';
-import { clearCookie, setCookie } from '@/utils/setCookie';
 import { MESSAGE_CODE } from '@/code/message.code';
 import { RESPONSE_CODE } from '@/code/response.code';
 import { ChangePasswordDto, CreateUserDto, ForgotPasswordDto, ResetPasswordDto, SignInDto, WithdrawDto } from '@/dto/auth.dto';
 import { ResponseDto } from '@/dto/response.dto';
 import { UserInfoDto } from '@/dto/user.dto';
+import { createError, createResponse } from '@/utils';
+import { createExampleUser } from '@/utils/createExampleUser';
+import { clearCookie, setCookie } from '@/utils/setCookie';
 import {
   Body,
   ClassSerializerInterceptor,
@@ -357,8 +357,13 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Get('session')
-  async getSession(@Req() req: FastifyRequest & { user: JwtPayload }) {
+  async getSession(@Req() req: FastifyRequest & { user: JwtPayload | null }) {
     const authUser = req.user;
+
+    if (!authUser) {
+      return createError('UNAUTHORIZED', 'UNAUTHORIZED');
+    }
+
     return this.authService.session(authUser.userNo);
   }
 
@@ -399,12 +404,17 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Delete('withdraw')
   async withdraw(
-    @Req() req: FastifyRequest & { user: JwtPayload },
+    @Req() req: FastifyRequest & { user: JwtPayload | null },
     @Body() withdrawData: WithdrawDto,
     @Res({ passthrough: true, }) res: FastifyReply
   ) {
-    const user = req.user;
-    const result = await this.authService.withdraw(user.userNo, withdrawData);
+    const authUser = req.user;
+
+    if (!authUser) {
+      return createError('UNAUTHORIZED', 'UNAUTHORIZED');
+    }
+
+    const result = await this.authService.withdraw(authUser.userNo, withdrawData);
 
     clearCookie(res, 'accessToken');
     clearCookie(res, 'refreshToken');
@@ -451,11 +461,15 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('change-password')
   async changePassword(
-    @Req() req: FastifyRequest & { user: JwtPayload },
+    @Req() req: FastifyRequest & { user: JwtPayload | null },
     @Body() changePasswordData: ChangePasswordDto
   ): Promise<ResponseDto<UserInfoDto>> {
-    const user = req.user;
-    return this.authService.changePassword(user.userNo, changePasswordData);
+    const authUser = req.user;
+
+    if (!authUser) {
+      return createError('UNAUTHORIZED', 'UNAUTHORIZED');
+    }
+    return this.authService.changePassword(authUser.userNo, changePasswordData);
   }
 
   /**

@@ -1,14 +1,14 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ZodValidationPipe } from 'nestjs-zod';
-import { HttpLoggingInterceptor } from './http-logging.interceptor';
-import { ResponseTimeInterceptor } from './response-time.interceptor';
-import { ConfigService } from '@nestjs/config';
-import { SwaggerModule } from '@nestjs/swagger';
-import { swaggerConfig, swaggerUiOptions } from './swagger.config';
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import { SwaggerModule } from '@nestjs/swagger';
+import { ZodValidationPipe } from 'nestjs-zod';
+import { AppModule } from './app.module';
+import { HttpLoggingInterceptor } from './http-logging.interceptor';
+import { swaggerConfig, swaggerUiOptions } from './swagger.config';
 
+import { UnifiedResponseInterceptor } from '@/interceptors/unified-response.interceptor';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 
@@ -44,7 +44,7 @@ async function bootstrap() {
   // 글로벌 인터셉터 설정
   app.useGlobalInterceptors(
     new HttpLoggingInterceptor(),
-    new ResponseTimeInterceptor()
+    new UnifiedResponseInterceptor()
   );
 
   // 글로벌 필터 설정
