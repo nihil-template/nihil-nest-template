@@ -93,7 +93,7 @@ export class UserRepository {
         , NOW()
         , NULL
         , NULL
-        ) RETURNING (
+        ) RETURNING
             USER_NO AS "userNo"
           , EML_ADDR AS "emlAddr"
           , USER_NM AS "userNm"
@@ -111,7 +111,6 @@ export class UserRepository {
           , TO_CHAR(UPDT_DT, 'YYYY-MM-DD HH24:MI:SS') AS "updtDt"
           , DEL_NO AS "delNo"
           , TO_CHAR(DEL_DT, 'YYYY-MM-DD HH24:MI:SS') AS "delDt"
-        )
       `
     );
 
@@ -161,7 +160,7 @@ export class UserRepository {
         , NOW()
         , NULL
         , NULL
-        ) RETURNING (
+        ) RETURNING
             USER_NO AS "userNo"
           , EML_ADDR AS "emlAddr"
           , USER_NM AS "userNm"
@@ -179,7 +178,6 @@ export class UserRepository {
           , TO_CHAR(UPDT_DT, 'YYYY-MM-DD HH24:MI:SS') AS "updtDt"
           , DEL_NO AS "delNo"
           , TO_CHAR(DEL_DT, 'YYYY-MM-DD HH24:MI:SS') AS "delDt"
-        )
       `
     );
 
