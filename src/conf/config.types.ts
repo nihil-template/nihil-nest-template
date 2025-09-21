@@ -40,6 +40,7 @@ export interface Config {
     user?: string;
     password?: string;
     name?: string;
+    schema?: string;
   };
   app?: {
     name?: string;

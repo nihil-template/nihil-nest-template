@@ -131,7 +131,7 @@ export class UserInfoDto extends createZodDto(userInfoSchema.partial()) {
   declare delDt?: string | null;
 }
 
-// 사용자 프로필 업데이트 DTO
+// 사용자 프로필 업데이트 DTO - 수정 가능한 모든 필드 포함
 export class UpdateUserDto extends createZodDto(updateUserSchema) {
   @ApiProperty({
     description: '사용자명 (2-30자)',
@@ -153,6 +153,74 @@ export class UpdateUserDto extends createZodDto(updateUserSchema) {
     required: false,
   })
   declare userBiogp?: string;
+
+  @ApiProperty({
+    description: '사용자 역할',
+    enum: [ 'USER', 'ADMIN', ],
+    example: 'USER',
+    required: false,
+  })
+  declare userRole?: UserRoleType;
+
+  @ApiProperty({
+    description: '사용 여부',
+    enum: [ 'Y', 'N', ],
+    example: 'Y',
+    required: false,
+  })
+  declare useYn?: YnType;
+
+  @ApiProperty({
+    description: '삭제 여부',
+    enum: [ 'Y', 'N', ],
+    example: 'N',
+    required: false,
+  })
+  declare delYn?: YnType;
+
+  @Exclude({ toPlainOnly: true, })
+  @ApiProperty({
+    description: '암호화된 비밀번호',
+    example: 'hashedPassword123!',
+    required: false,
+  })
+  declare encptPswd?: string;
+
+  @Exclude({ toPlainOnly: true, })
+  @ApiProperty({
+    description: '리프레시 토큰',
+    example: 'refresh_token_here',
+    required: false,
+  })
+  declare reshToken?: string | null;
+
+  @ApiProperty({
+    description: '마지막 로그인 날짜',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+  })
+  declare lastLgnDt?: string | null;
+
+  @ApiProperty({
+    description: '생성자 번호',
+    example: 1,
+    required: false,
+  })
+  declare crtNo?: number | null;
+
+  @ApiProperty({
+    description: '수정자 번호',
+    example: 1,
+    required: false,
+  })
+  declare updtNo?: number | null;
+
+  @ApiProperty({
+    description: '삭제자 번호',
+    example: 1,
+    required: false,
+  })
+  declare delNo?: number | null;
 }
 
 // 사용자 검색 DTO

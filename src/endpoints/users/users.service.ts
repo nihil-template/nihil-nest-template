@@ -13,7 +13,7 @@ export class UsersService {
   async getUsers(
     strtRow?: number,
     endRow?: number,
-    srchType?: 'userNm' | 'emlAddr',
+    srchType?: 'userNm' | 'emlAddr' | 'userRole',
     srchKywd?: string
   ): Promise<ListDto<UserInfoDto> | null> {
     const searchData = {
@@ -58,7 +58,7 @@ export class UsersService {
 
   async getUserById(userNo: number): Promise<UserInfoDto | null> {
     try {
-      const userData = await this.userRepository.findByUserNo(userNo);
+      const userData = await this.userRepository.findUser({ userNo, });
       return userData;
     }
     catch {
@@ -68,7 +68,7 @@ export class UsersService {
 
   async getUserByEmail(emlAddr: string): Promise<UserInfoDto | null> {
     try {
-      const userData = await this.userRepository.findByEmail(emlAddr);
+      const userData = await this.userRepository.findUser({ emlAddr, });
       return userData;
     }
     catch {
@@ -85,7 +85,7 @@ export class UsersService {
 
     try {
       // 현재 사용자 정보 조회
-      const currentUser = await this.userRepository.findByUserNo(userNo);
+      const currentUser = await this.userRepository.findUser({ userNo, });
 
       if (!currentUser) {
         return { success: false, errorType: 'NOT_FOUND', };
@@ -94,7 +94,7 @@ export class UsersService {
       // 사용자명 변경 시 중복 확인
       if (userNm) {
         // 1. 이름으로 사용자 찾기
-        const existingUser = await this.userRepository.findByUserName(userNm);
+        const existingUser = await this.userRepository.findUser({ userNm, });
 
         if (existingUser) {
           // 2. 찾은 사용자의 userNo와 현재 userNo 비교
@@ -107,7 +107,7 @@ export class UsersService {
       }
 
       // 프로필 업데이트
-      const updatedUser = await this.userRepository.updateProfile(userNo, {
+      const updatedUser = await this.userRepository.updateUser(userNo, {
         userNm,
         proflImg,
         userBiogp,

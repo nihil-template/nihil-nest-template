@@ -51,7 +51,7 @@ export class AuthService {
    */
   async signUp(signUpData: CreateUserDto): Promise<ResponseDto<UserInfoDto>> {
     // 이메일 중복 확인
-    const existingUser = await this.userRepository.findByEmail(signUpData.emlAddr);
+    const existingUser = await this.userRepository.findUser({ emlAddr: signUpData.emlAddr, });
 
     if (existingUser) {
       return createError('CONFLICT', 'CONFLICT_EMAIL');
@@ -61,7 +61,7 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(signUpData.password, 10);
 
     // 일반 사용자 계정 생성
-    const newUser = await this.userRepository.createUser(signUpData, hashedPassword);
+    const newUser = await this.userRepository.createUserWithRole(signUpData, hashedPassword);
 
     return createResponse(
       'SUCCESS',
@@ -89,14 +89,11 @@ export class AuthService {
     const { emlAddr, password, } = signInData;
 
     // 사용자 조회
-    const user = await this.userRepository.findByEmail(emlAddr);
+    const user = await this.userRepository.findUser({ emlAddr, });
 
     if (!user) {
       return createError('UNAUTHORIZED', 'INVALID_CREDENTIALS');
     }
-
-    console.log(password);
-    console.log(user.encptPswd);
 
     // 비밀번호 검증
     const isPasswordMatching = await bcrypt.compare(password, user.encptPswd);
@@ -126,7 +123,10 @@ export class AuthService {
     ]);
 
     // 리프레시 토큰과 마지막 로그인 시간 업데이트
-    await this.userRepository.updateSignInInfo(user.userNo, reshToken);
+    await this.userRepository.updateUser(user.userNo, {
+      reshToken,
+      lastLgnDt: new Date().toISOString(),
+    });
 
     // AccessToken 만료시간 계산
     const accessTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000).getTime();
@@ -192,7 +192,7 @@ export class AuthService {
         }),
       ]);
 
-      await this.userRepository.updateRefreshToken(user.userNo, newReshToken);
+      await this.userRepository.updateUser(user.userNo, { reshToken: newReshToken, });
 
       // AccessToken 만료시간 계산
       const accessTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000).getTime();
@@ -219,7 +219,7 @@ export class AuthService {
 
       if (decoded?.userNo) {
         // 리프레시 토큰 삭제
-        await this.userRepository.clearRefreshToken(decoded.userNo);
+        await this.userRepository.updateUser(decoded.userNo, { reshToken: null, });
       }
 
       return createResponse('SUCCESS', 'SIGN_OUT_SUCCESS', null);
@@ -237,7 +237,7 @@ export class AuthService {
    * @returns 세션 정보
    */
   async session(userNo: number): Promise<ResponseDto<UserInfoDto>> {
-    const user = await this.userRepository.findByUserNo(userNo);
+    const user = await this.userRepository.findUser({ userNo, });
 
     if (!user) {
       return createError('UNAUTHORIZED', 'INVALID_CREDENTIALS');
@@ -261,7 +261,7 @@ export class AuthService {
    * @returns 회원탈퇴 결과
    */
   async withdraw(userNo: number, withdrawData: WithdrawDto): Promise<ResponseDto<UserInfoDto>> {
-    const user = await this.userRepository.findByUserNo(userNo);
+    const user = await this.userRepository.findUser({ userNo, });
 
     if (!user) {
       return createError('UNAUTHORIZED', 'INVALID_CREDENTIALS');
@@ -277,7 +277,11 @@ export class AuthService {
     }
 
     // 하나의 쿼리로 탈퇴 처리 + 조회
-    const withdrawnUser = await this.userRepository.withdrawUser(userNo);
+    const withdrawnUser = await this.userRepository.updateUser(userNo, {
+      useYn: 'N',
+      delYn: 'Y',
+      delNo: userNo,
+    });
 
     const userToReturn = cloneDeep(withdrawnUser);
     userToReturn.encptPswd = null;
@@ -302,7 +306,7 @@ export class AuthService {
   ): Promise<ResponseDto<UserInfoDto>> {
     const { currentPassword, newPassword, } = changePasswordData;
 
-    const user = await this.userRepository.findByUserNo(userNo);
+    const user = await this.userRepository.findUser({ userNo, });
 
     if (!user) {
       return createError('UNAUTHORIZED', 'INVALID_CREDENTIALS');
@@ -320,7 +324,7 @@ export class AuthService {
     const newEncptPswd = await bcrypt.hash(newPassword, 10);
 
     // 하나의 쿼리로 업데이트 + 조회
-    const updatedUser = await this.userRepository.updatePassword(userNo, newEncptPswd);
+    const updatedUser = await this.userRepository.updateUser(userNo, { encptPswd: newEncptPswd, });
 
     const userToReturn = cloneDeep(updatedUser);
     userToReturn.encptPswd = null;
@@ -342,7 +346,7 @@ export class AuthService {
     forgotPasswordData: ForgotPasswordDto
   ): Promise<ResponseDto<null>> {
     const { emlAddr, } = forgotPasswordData;
-    const user = await this.userRepository.findByEmail(emlAddr);
+    const user = await this.userRepository.findUser({ emlAddr, });
 
     if (!user) {
       return createResponse('SUCCESS', 'FORGOT_PASSWORD_SUCCESS', null);
@@ -415,7 +419,7 @@ export class AuthService {
       const encptPswd = await bcrypt.hash(newPassword, 10);
 
       // 하나의 쿼리로 업데이트 + 조회
-      const updatedUser = await this.userRepository.updatePassword(payload.userNo, encptPswd);
+      const updatedUser = await this.userRepository.updateUser(payload.userNo, { encptPswd, });
 
       const userToReturn = cloneDeep(updatedUser);
       userToReturn.encptPswd = null;

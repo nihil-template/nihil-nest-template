@@ -14,7 +14,7 @@ export class AdminService {
 
   async signUpAdmin(signUpData: CreateAdminDto): Promise<ResponseDto<UserInfoDto>> {
     // 이메일 중복 확인
-    const existingUser = await this.userRepository.findByEmail(signUpData.emlAddr);
+    const existingUser = await this.userRepository.findUser({ emlAddr: signUpData.emlAddr, });
 
     if (existingUser) {
       return createError('CONFLICT', 'CONFLICT_EMAIL');
@@ -24,7 +24,7 @@ export class AdminService {
     const hashedPassword = await bcrypt.hash(signUpData.password, 10);
 
     // 관리자 계정 생성
-    const newUser = await this.userRepository.createAdmin(signUpData, hashedPassword);
+    const newUser = await this.userRepository.createUserWithRole(signUpData, hashedPassword);
 
     return createResponse(
       'SUCCESS',

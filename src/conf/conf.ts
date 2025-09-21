@@ -4,18 +4,42 @@ import * as yaml from 'js-yaml';
 import * as path from 'path';
 import type { Config } from './config.types';
 
-let config: Config = {};
+// 설정 파일 경로 해석기 (외부에서 재사용 가능)
+export function resolveConfigPath(): string | null {
+  const candidates = [
+    process.env.CONFIG_PATH,
+    path.join(process.cwd(), 'config.yaml'),
+    path.join(process.cwd(), 'apps', 'api', 'config.yaml'),
+    path.resolve(__dirname, '../../config.yaml'),
+  ].filter((p): p is string => Boolean(p));
 
-try {
-  const configPath = path.join(process.cwd(), 'config.yaml');
-  const fileContents = fs.readFileSync(configPath, 'utf8');
-  config = yaml.load(fileContents) as Config;
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) return p;
+    }
+    catch {
+      // ignore and continue
+    }
+  }
+  return null;
 }
-catch (error: unknown) {
-  const errorMessage = error instanceof Error
-    ? error.message
-    : '알 수 없는 오류';
-  console.warn('config.yaml을 로드할 수 없습니다. 기본값을 사용합니다:', errorMessage);
+
+// YAML 설정 로더 (외부에서 재사용 가능)
+export function loadYamlConfig(): Config {
+  try {
+    const configPath = resolveConfigPath();
+    if (!configPath) return {} as Config;
+    const fileContents = fs.readFileSync(configPath, 'utf8');
+    return yaml.load(fileContents) as Config;
+  }
+  catch {
+    return {} as Config;
+  }
+}
+
+const config: Config = loadYamlConfig();
+if (!config || Object.keys(config).length === 0) {
+  console.warn('config.yaml을 로드할 수 없습니다. 기본값을 사용합니다. (CONFIG_PATH, apps/api/config.yaml 경로 확인)');
 }
 
 // 서버 설정 객체
@@ -62,7 +86,7 @@ export const initialAdminConfig = registerAs('initialAdmin', () => ({
   password: config.initialAdmin?.password || 'changeme123!',
 }));
 
-// 데이터베이스 설정 객체
+// 데이터베이스 설정 객체 (YAML만 사용)
 export const databaseConfig = registerAs('database', () => ({
   url: config.database?.url || '',
   host: config.database?.host || 'localhost',
@@ -70,7 +94,13 @@ export const databaseConfig = registerAs('database', () => ({
   user: config.database?.user || 'postgres',
   password: config.database?.password || 'postgres',
   name: config.database?.name || 'postgres',
+  schema: config.database?.schema || 'public',
 }));
+
+// 외부 사용을 위한 DB URL 헬퍼 (YAML만 사용)
+export function getDatabaseUrl(): string {
+  return config.database?.url || '';
+}
 
 // 앱 설정 객체
 export const appConfig = registerAs('app', () => ({

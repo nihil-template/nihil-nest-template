@@ -1,30 +1,18 @@
-import { schemas } from '@/endpoints/drizzle/schemas';
+import { DrizzleService } from '@/endpoints/drizzle/drizzle.service';
 import { Global, Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 
 export const DRIZZLE = Symbol('drizzle_connection');
 
 @Global()
 @Module({
   providers: [
+    DrizzleService,
     {
       provide: DRIZZLE,
-      useFactory: (configService: ConfigService) => {
-        const pool = new Pool({
-          connectionString: configService.get('database.url'),
-        });
-        return drizzle(pool, {
-          schema: {
-            // schemas에 정의된 스키마 모음을 임포트.
-            ...schemas,
-          },
-        });
-      },
-      inject: [ ConfigService, ],
+      useFactory: (drizzleService: DrizzleService) => drizzleService.getDb(),
+      inject: [ DrizzleService, ],
     },
   ],
-  exports: [ DRIZZLE, ],
+  exports: [ DRIZZLE, DrizzleService, ],
 })
 export class DrizzleModule {}
